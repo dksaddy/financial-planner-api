@@ -27,3 +27,13 @@ export const login = asyncHandler(async (req, res) => {
     )
   );
 });
+
+export const me = asyncHandler(async (req, res) => {
+  return res.status(HTTP_STATUS.OK).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      AUTH_MESSAGES.CURRENT_USER,
+      req.user
+    )
+  );
+});

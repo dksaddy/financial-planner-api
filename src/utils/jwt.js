@@ -6,3 +6,7 @@ export const generateToken = (payload) => {
     expiresIn: JWT_CONFIG.expiresIn,
   });
 };
+
+export const verifyToken = (token) => {
+  return jwt.verify(token, JWT_CONFIG.secret);
+};

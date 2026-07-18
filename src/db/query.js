@@ -1,6 +1,5 @@
-import { query } from "../db/query.js";
+import { pool } from "../config/database.js";
 
-const result = await query(
-  "SELECT * FROM users WHERE id = $1",
-  [id]
-);
+export const query = async (text, params = []) => {
+  return pool.query(text, params);
+};

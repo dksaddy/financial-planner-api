@@ -6,6 +6,8 @@ import authRoutes from "./routes/auth.routes.js";
 import notFound from "./middlewares/notFound.middleware.js";
 import errorHandler from "./middlewares/error.middleware.js";
 
+import savingPlansRoutes from "./routes/savingPlans.routes.js";
+
 const app = express();
 
 app.use(cors());
@@ -22,7 +24,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 
-
+app.use("/api/saving-plans", savingPlansRoutes);
 
 
 // Always last

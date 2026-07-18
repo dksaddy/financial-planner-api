@@ -1,7 +1,7 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const morgan = require("morgan");
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import morgan from "morgan";
 
 const app = express();
 
@@ -11,10 +11,10 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 app.get("/", (req, res) => {
-    res.json({
-        success: true,
-        message: "Financial Planner API"
-    });
+  res.json({
+    success: true,
+    message: "Financial Planner API",
+  });
 });
 
-module.exports = app;
+export default app;

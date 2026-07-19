@@ -111,3 +111,26 @@ export const emailExists = async (
 
   return rows.length > 0;
 };
+
+export const updateAvatar = async (id, avatarUrl) => {
+  const { rows } = await query(
+    `
+    UPDATE users
+    SET
+      avatar_url = $2,
+      updated_at = NOW()
+    WHERE id = $1
+    RETURNING
+      id,
+      name,
+      email,
+      salary,
+      avatar_url,
+      created_at,
+      updated_at
+    `,
+    [id, avatarUrl]
+  );
+
+  return rows[0];
+};

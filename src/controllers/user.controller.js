@@ -2,6 +2,7 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import * as userService from "../services/user.service.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { uploadAvatar } from "../services/user.service.js";
 
 export const getProfile =
   asyncHandler(async (req, res) => {
@@ -34,3 +35,19 @@ export const updateProfile =
     );
 
   });
+
+  export const updateAvatar = asyncHandler(async (req, res) => {
+  const user = await uploadAvatar(
+    req.user.id,
+    req.file
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      "Avatar updated successfully",
+      user
+    )
+  );
+});
+

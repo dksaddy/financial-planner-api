@@ -2,10 +2,12 @@ import express from "express";
 
 import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 
 import {
   getProfile,
-  updateProfile
+  updateProfile,
+  updateAvatar
 } from "../controllers/user.controller.js";
 
 import {
@@ -25,6 +27,12 @@ router.put(
   "/profile",
   validate(updateProfileSchema),
   updateProfile
+);
+
+router.put(
+  "/avatar",
+  upload.single("avatar"),
+  updateAvatar
 );
 
 export default router;

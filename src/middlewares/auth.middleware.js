@@ -1,46 +1,51 @@
 import AppError from "../utils/AppError.js";
 import { verifyToken } from "../utils/jwt.js";
-import { findUserById } from "../repositories/auth.repository.js";
+import * as userRepository from "../repositories/user.repository.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { AUTH_MESSAGES } from "../constants/messages.js";
 
 const authenticate = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return next(
-      new AppError(
-        "Authentication required",
-        HTTP_STATUS.UNAUTHORIZED
-      )
-    );
-  }
-
-  const token = authHeader.split(" ")[1];
-
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new AppError(
+        AUTH_MESSAGES.AUTH_REQUIRED,
+        HTTP_STATUS.UNAUTHORIZED
+      );
+    }
+
+    const token = authHeader.split(" ")[1];
+
     const decoded = verifyToken(token);
 
-    const user = await findUserById(decoded.id);
+    const user = await userRepository.findById(decoded.id);
 
     if (!user) {
-      return next(
-        new AppError(
-          "User not found",
-          HTTP_STATUS.UNAUTHORIZED
-        )
+      throw new AppError(
+        AUTH_MESSAGES.USER_NOT_FOUND,
+        HTTP_STATUS.UNAUTHORIZED
       );
     }
 
     req.user = user;
 
     next();
-  } catch {
-    next(
-      new AppError(
-        "Invalid or expired token",
-        HTTP_STATUS.UNAUTHORIZED
-      )
-    );
+  } catch (error) {
+    // JWT errors only
+    if (
+      error.name === "JsonWebTokenError" ||
+      error.name === "TokenExpiredError"
+    ) {
+      return next(
+        new AppError(
+          AUTH_MESSAGES.INVALID_TOKEN,
+          HTTP_STATUS.UNAUTHORIZED
+        )
+      );
+    }
+
+    next(error);
   }
 };
 

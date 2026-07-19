@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import * as userRepository from "../repositories/user.repository.js";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import bcrypt from "bcrypt";
 
 export const updateProfile = async (
   userId,
@@ -62,4 +63,39 @@ export const uploadAvatar = async (userId, file) => {
     userId,
     data.publicUrl
   );
+};
+
+export const changePassword = async (
+  userId,
+  {
+    oldPassword,
+    newPassword,
+  }
+) => {
+
+  const user =
+    await userRepository.findByIdWithPassword(userId);
+
+  const isMatch =
+    await bcrypt.compare(
+      oldPassword,
+      user.password
+    );
+
+  if (!isMatch) {
+    throw new AppError(
+      "Old password is incorrect.",
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
+  const hashedPassword =
+    await bcrypt.hash(newPassword, 10);
+
+  await userRepository.updatePassword(
+    userId,
+    hashedPassword
+  );
+
+  return;
 };

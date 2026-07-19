@@ -29,3 +29,25 @@ export const updateProfileSchema = z
       message: "At least one field is required.",
     }
   );
+
+
+export const changePasswordSchema = z.object({
+  oldPassword: z
+    .string()
+    .min(8, "Old password must be at least 8 characters"),
+
+  newPassword: z
+    .string()
+    .min(8, "New password must be at least 8 characters"),
+
+  confirmPassword: z
+    .string()
+    .min(8)
+}).refine(
+  (data) => data.newPassword === data.confirmPassword,
+  {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  }
+);
+

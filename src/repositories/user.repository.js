@@ -134,3 +134,35 @@ export const updateAvatar = async (id, avatarUrl) => {
 
   return rows[0];
 };
+
+export const updatePassword = async (id, hashedPassword) => {
+  const { rows } = await query(
+    `
+    UPDATE users
+    SET
+      password = $2,
+      updated_at = NOW()
+    WHERE id = $1
+    RETURNING id
+    `,
+    [id, hashedPassword]
+  );
+
+  return rows[0];
+};
+
+export const findByIdWithPassword = async (id) => {
+  const { rows } = await query(
+    `
+    SELECT
+      id,
+      password
+    FROM users
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [id]
+  );
+
+  return rows[0];
+};

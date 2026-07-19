@@ -7,11 +7,13 @@ import upload from "../middlewares/upload.middleware.js";
 import {
   getProfile,
   updateProfile,
-  updateAvatar
+  updateAvatar,
+  updatePassword
 } from "../controllers/user.controller.js";
 
 import {
-  updateProfileSchema
+  updateProfileSchema,
+  changePasswordSchema
 } from "../validations/user.validation.js";
 
 const router = express.Router();
@@ -33,6 +35,12 @@ router.put(
   "/avatar",
   upload.single("avatar"),
   updateAvatar
+);
+
+router.put(
+  "/change-password",
+  validate(changePasswordSchema),
+  updatePassword
 );
 
 export default router;

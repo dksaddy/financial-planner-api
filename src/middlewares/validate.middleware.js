@@ -1,4 +1,4 @@
-export const validate = (schema) => {
+const validate = (schema) => {
   return (req, res, next) => {
     const result = schema.safeParse(req.body);
 
@@ -7,7 +7,7 @@ export const validate = (schema) => {
         success: false,
         message: "Validation failed",
         errors: result.error.issues.map((issue) => ({
-          field: issue.path[0],
+          field: issue.path.join("."),
           message: issue.message,
         })),
       });
@@ -18,3 +18,5 @@ export const validate = (schema) => {
     next();
   };
 };
+
+export default validate;

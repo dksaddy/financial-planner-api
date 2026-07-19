@@ -7,6 +7,8 @@ import notFound from "./middlewares/notFound.middleware.js";
 import errorHandler from "./middlewares/error.middleware.js";
 
 import savingPlansRoutes from "./routes/savingPlans.routes.js";
+import expenseTypesRoutes from "./routes/expenseTypes.routes.js";
+
 
 const app = express();
 
@@ -25,6 +27,8 @@ app.get("/", (req, res) => {
 app.use("/api/auth", authRoutes);
 
 app.use("/api/saving-plans", savingPlansRoutes);
+
+app.use("/api/expense-types", expenseTypesRoutes);
 
 
 // Always last

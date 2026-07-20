@@ -18,3 +18,12 @@ export const AUTH_MESSAGES = {
   INVALID_TOKEN: "Invalid or expired token",
   USER_NOT_FOUND: "User not found",
 };
+
+export const TARGET_MESSAGES = {
+  CREATED: "Target created successfully",
+  FETCHED: "Targets fetched successfully",
+  FETCHED_ONE: "Target fetched successfully",
+  UPDATED: "Target updated successfully",
+  DELETED: "Target deleted successfully",
+  NOT_FOUND: "Target not found",
+};

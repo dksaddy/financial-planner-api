@@ -10,6 +10,7 @@ import savingPlansRoutes from "./routes/savingPlans.routes.js";
 import expenseTypesRoutes from "./routes/expenseTypes.routes.js";
 import expenseRecordRoutes from "./routes/expenseRecords.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import targetRoutes from "./routes/targets.routes.js";
 
 const app = express();
 
@@ -31,11 +32,11 @@ app.use("/api/saving-plans", savingPlansRoutes);
 
 app.use("/api/expense-types", expenseTypesRoutes);
 
-
 app.use("/api/expense-records", expenseRecordRoutes);
 
-
 app.use("/api/users", userRoutes);
+
+app.use("/api/target",targetRoutes);
 
 
 // Always last

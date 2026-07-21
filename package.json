@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-
     "migrate": "node scripts/migrate.js",
     "migrate:test": "dotenv -e .env.test -- node scripts/migrate.js",
-
-    "reset:test": "dotenv -e .env.test -- node scripts/reset.js"
+    "reset:test": "dotenv -e .env.test -- node scripts/reset.js",
+    "seed:test": "dotenv -e .env.test -- node scripts/seed.js",
+    "prepare:test": "npm run reset:test && npm run migrate:test && npm run seed:test"
   },
   "keywords": [],
   "author": "",

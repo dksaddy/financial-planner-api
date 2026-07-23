@@ -298,7 +298,7 @@ Authorization: Bearer <token>
 | GET | /api/users/profile |
 | PUT | /api/users/profile |
 | PUT | /api/users/avatar |
-| PUT | /api/users/change-password *(planned)* |
+| PUT | /api/users/change-password |
 
 ---
 
@@ -489,7 +489,6 @@ Current security measures include:
 
 The following features are not yet implemented.
 
-- Target management
 - Dashboard analytics
 - Monthly financial summaries
 - Password reset

@@ -6,19 +6,15 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-
     "migrate": "node scripts/migrate.js",
     "migrate:test": "dotenv -e .env.test -- node scripts/migrate.js",
-
     "reset:test": "dotenv -e .env.test -- node scripts/reset.js",
     "seed:test": "dotenv -e .env.test -- node scripts/seed.js",
-
     "prepare:test": "npm run reset:test && npm run migrate:test && npm run seed:test",
-    
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:prepare": "npm run prepare:test",
-    "test:all": "npm run prepare:test && npm test"
+    "test": "cross-env ENV_FILE=.env.test NODE_ENV=test vitest run",
+    "test:watch": "cross-env ENV_FILE=.env.test NODE_ENV=test vitest",
+    "test:all": "npm run prepare:test && npm test",
+    "test:prepare": "npm run prepare:test"
   },
   "keywords": [],
   "author": "",
@@ -39,6 +35,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "dotenv-cli": "^11.0.0",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2",

@@ -1,11 +1,13 @@
-import request from "supertest";
-import app from "../../src/app.js";
+import { api } from "./request.helper.js";
 import { TEST_USER } from "./constants.js";
 
 export async function login() {
-  const response = await request(app)
+  const response = await api()
     .post("/api/auth/login")
     .send(TEST_USER);
 
-  return response.body.data.token;
+  return {
+    token: response.body.data.token,
+    user: response.body.data.user,
+  };
 }

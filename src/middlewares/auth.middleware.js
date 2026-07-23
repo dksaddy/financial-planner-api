@@ -9,14 +9,10 @@ const authenticate = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader?.startsWith("Bearer ")) {
-      throw new AppError(
-        AUTH_MESSAGES.AUTH_REQUIRED,
-        HTTP_STATUS.UNAUTHORIZED
-      );
+      throw new AppError(AUTH_MESSAGES.AUTH_REQUIRED, HTTP_STATUS.UNAUTHORIZED);
     }
 
     const token = authHeader.split(" ")[1];
-
     const decoded = verifyToken(token);
 
     const user = await userRepository.findById(decoded.id);
@@ -24,7 +20,7 @@ const authenticate = async (req, res, next) => {
     if (!user) {
       throw new AppError(
         AUTH_MESSAGES.USER_NOT_FOUND,
-        HTTP_STATUS.UNAUTHORIZED
+        HTTP_STATUS.UNAUTHORIZED,
       );
     }
 
@@ -38,10 +34,7 @@ const authenticate = async (req, res, next) => {
       error.name === "TokenExpiredError"
     ) {
       return next(
-        new AppError(
-          AUTH_MESSAGES.INVALID_TOKEN,
-          HTTP_STATUS.UNAUTHORIZED
-        )
+        new AppError(AUTH_MESSAGES.INVALID_TOKEN, HTTP_STATUS.UNAUTHORIZED),
       );
     }
 

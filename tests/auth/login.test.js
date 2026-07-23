@@ -1,19 +1,21 @@
-import request from "supertest";
-import app from "../../src/app.js";
+import { describe, it, expect } from "vitest";
+import { api } from "../helpers/request.helper.js";
+import { TEST_USER } from "../helpers/constants.js";
 
 describe("POST /api/auth/login", () => {
   it("should login successfully", async () => {
-    const response = await request(app)
+    const response = await api()
       .post("/api/auth/login")
-      .send({
-        email: "test@example.com",
-        password: "password123",
-      });
+      .send(TEST_USER);
 
-    expect(response.statusCode).toBe(200);
-
+    expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe("Login successful");
 
-    expect(response.body.data.token).toBeDefined();
+    expect(response.body.data).toHaveProperty("token");
+
+    expect(response.body.data.user.email).toBe(
+      TEST_USER.email
+    );
   });
 });

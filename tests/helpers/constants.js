@@ -3,6 +3,11 @@ export const TEST_USER = {
   password: "password123",
 };
 
+export const SECOND_USER = {
+  email: "other@example.com",
+  password: "password123",
+};
+
 export const INVALID_USER = {
   email: "wrong@example.com",
   password: "wrongpassword",

@@ -1,10 +1,21 @@
 import { api } from "./request.helper.js";
-import { TEST_USER } from "./constants.js";
+import { TEST_USER, SECOND_USER } from "./constants.js";
 
 export async function login() {
   const response = await api()
     .post("/api/auth/login")
     .send(TEST_USER);
+
+  return {
+    token: response.body.data.token,
+    user: response.body.data.user,
+  };
+}
+
+export async function loginSecondUser() {
+  const response = await api()
+    .post("/api/auth/login")
+    .send(SECOND_USER);
 
   return {
     token: response.body.data.token,

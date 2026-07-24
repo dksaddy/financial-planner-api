@@ -39,63 +39,42 @@ async function seed() {
       ($1,$2,$3,$4)
       RETURNING id;
       `,
-      [
-        "Test User",
-        "test@example.com",
-        password,
-        8000,
-      ]
+      ["Test User", "test@example.com", password, 8000],
     );
 
     const userId = userResult.rows[0].id;
 
     console.log("✅ User");
 
+    const secondUserResult = await client.query(
+      `
+  INSERT INTO users
+  (
+    name,
+    email,
+    password,
+    salary
+  )
+  VALUES
+  ($1,$2,$3,$4)
+  RETURNING id;
+  `,
+      ["Other User", "other@example.com", password, 12000],
+    );
+
+    const secondUserId = secondUserResult.rows[0].id;
+
+    console.log("✅ Second User");
+
     /* ============================
        SAVING PLANS
     ============================ */
 
     const savingPlans = [
-      [
-        "Type 1",
-        250,
-        7,
-        12,
-        13000,
-        52,
-        13619.62,
-        "completed",
-      ],
-      [
-        "Type 2",
-        2500,
-        30,
-        12,
-        30000,
-        12,
-        31608.01,
-        "completed",
-      ],
-      [
-        "Type 3",
-        500,
-        7,
-        6,
-        13000,
-        26,
-        13298.59,
-        "completed",
-      ],
-      [
-        "Type 4",
-        250,
-        7,
-        6,
-        6500,
-        26,
-        6649.39,
-        "active",
-      ],
+      ["Type 1", 250, 7, 12, 13000, 52, 13619.62, "completed"],
+      ["Type 2", 2500, 30, 12, 30000, 12, 31608.01, "completed"],
+      ["Type 3", 500, 7, 6, 13000, 26, 13298.59, "completed"],
+      ["Type 4", 250, 7, 6, 6500, 26, 6649.39, "active"],
     ];
 
     for (const plan of savingPlans) {
@@ -116,11 +95,40 @@ async function seed() {
         VALUES
         ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         `,
-        [userId, ...plan]
+        [userId, ...plan],
       );
     }
 
     console.log("✅ Saving Plans");
+
+    const secondUserPlans = [
+      ["Vacation Fund", 1000, 30, 12, 12000, 12, 0, "active"],
+      ["New Laptop", 3000, 30, 12, 36000, 12, 0, "completed"],
+    ];
+
+    for (const plan of secondUserPlans) {
+      await client.query(
+        `
+    INSERT INTO saving_plans
+    (
+      user_id,
+      name,
+      amount,
+      frequency,
+      months,
+      deposit_amount,
+      deposit_frequency,
+      withdrawal_amount,
+      status
+    )
+    VALUES
+    ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    `,
+        [secondUserId, ...plan],
+      );
+    }
+
+    console.log("✅ Second User Saving Plans");
 
     /* ============================
        EXPENSE TYPES
@@ -201,7 +209,7 @@ async function seed() {
           expense.name,
           JSON.stringify(expense.categories),
           expense.total,
-        ]
+        ],
       );
 
       expenseTypeIds.push({
@@ -249,12 +257,7 @@ async function seed() {
         VALUES
         ($1,$2,$3,$4)
         `,
-        [
-          userId,
-          type.id,
-          dates[i],
-          type.total,
-        ]
+        [userId, type.id, dates[i], type.total],
       );
     }
 
@@ -283,7 +286,7 @@ async function seed() {
         VALUES
         ($1,$2,$3,$4)
         `,
-        [userId, ...target]
+        [userId, ...target],
       );
     }
 
@@ -296,7 +299,15 @@ async function seed() {
     console.log("");
     console.log("Login Credentials");
     console.log("-----------------");
+
+    console.log("User 1");
     console.log("Email    : test@example.com");
+    console.log("Password : password123");
+
+    console.log("");
+
+    console.log("User 2");
+    console.log("Email    : other@example.com");
     console.log("Password : password123");
   } catch (error) {
     await client.query("ROLLBACK");

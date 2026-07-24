@@ -1,8 +1,14 @@
 import { api } from "./request.helper.js";
 import { login } from "./auth.helper.js";
 
-export async function createSavingPlan(overrides = {}) {
-  const { token } = await login();
+export async function createSavingPlan(
+  token = null,
+  overrides = {}
+) {
+  if (!token) {
+    const auth = await login();
+    token = auth.token;
+  }
 
   const payload = {
     name: "Emergency Fund",

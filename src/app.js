@@ -11,6 +11,7 @@ import expenseTypesRoutes from "./routes/expenseTypes.routes.js";
 import expenseRecordRoutes from "./routes/expenseRecords.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import targetRoutes from "./routes/targets.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use("/api/users", userRoutes);
 
 app.use("/api/target",targetRoutes);
 
+app.use("/api/dashboard", dashboardRoutes);
 
 // Always last
 // 404 Middleware

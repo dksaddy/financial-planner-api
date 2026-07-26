@@ -42,3 +42,22 @@ export const getDashboardSummary = async (userId) => {
 
   return rows[0];
 };
+
+export const getPendingTargets = async (userId) => {
+  const sql = `
+    SELECT
+      id,
+      name,
+      target_amount,
+      status,
+      created_at
+    FROM targets
+    WHERE user_id = $1
+      AND status = 'pending'
+    ORDER BY created_at DESC;
+  `;
+
+  const { rows } = await query(sql, [userId]);
+
+  return rows;
+};

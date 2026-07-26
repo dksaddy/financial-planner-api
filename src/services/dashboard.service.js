@@ -1,7 +1,10 @@
 import * as repository from "../repositories/dashboard.repository.js";
 
 export const getDashboardData = async (userId) => {
-  const summary = await repository.getDashboardSummary(userId);
+  const [summary, pendingTargets] = await Promise.all([
+    repository.getDashboardSummary(userId),
+    repository.getPendingTargets(userId),
+  ]);
 
   const salary = Number(summary.salary);
 
@@ -13,22 +16,24 @@ export const getDashboardData = async (userId) => {
 
   const monthlySaving = Number(summary.monthly_saving);
 
-  const profit =
-    totalWithdrawal - totalDeposit;
+  const profit = totalWithdrawal - totalDeposit;
 
   const totalMonthlySaving =
-    weeklySaving * 4 +
-    monthlySaving;
+    weeklySaving * 4 + monthlySaving;
 
   const monthlySpending =
-    salary -
-    totalMonthlySaving;
+    salary - totalMonthlySaving;
 
   const dailySpending =
     monthlySpending / 26;
 
   const weeklySpending =
     dailySpending * 6;
+
+  const totalTargetAmount = pendingTargets.reduce(
+    (sum, target) => sum + Number(target.target_amount),
+    0
+  );
 
   return {
     saving: {
@@ -42,9 +47,15 @@ export const getDashboardData = async (userId) => {
 
     spending: {
       salary,
-      monthly: monthlySpending,
-      weekly: weeklySpending,
-      daily: dailySpending,
+      monthly: Number(monthlySpending.toFixed(2)),
+      weekly: Number(weeklySpending.toFixed(2)),
+      daily: Number(dailySpending.toFixed(2)),
+    },
+
+    targets: {
+      totalPendingTargets: pendingTargets.length,
+      totalTargetAmount: Number(totalTargetAmount.toFixed(2)),
+      pendingTargets,
     },
   };
 };

@@ -61,3 +61,33 @@ export const getPendingTargets = async (userId) => {
 
   return rows;
 };
+
+export const getTopExpenseTypes = async (userId) => {
+  const sql = `
+    SELECT
+      et.id,
+      et.name,
+      COUNT(er.id) AS frequency,
+      COALESCE(SUM(er.total), 0) AS total_amount
+
+    FROM expense_records er
+    INNER JOIN expense_types et
+      ON et.id = er.expense_type_id
+
+    WHERE er.user_id = $1
+
+    GROUP BY
+      et.id,
+      et.name
+
+    ORDER BY
+      COUNT(er.id) DESC,
+      SUM(er.total) DESC
+
+    LIMIT 3;
+  `;
+
+  const { rows } = await query(sql, [userId]);
+
+  return rows;
+};

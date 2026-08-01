@@ -6,12 +6,18 @@ export const getDashboardData = async (userId) => {
     pendingTargets,
     topExpenses,
     currentWeekExpenses,
+    lastFourWeeksExpenses,
   ] = await Promise.all([
     repository.getDashboardSummary(userId),
     repository.getPendingTargets(userId),
     repository.getTopExpenseTypes(userId),
     repository.getCurrentWeekExpenses(userId),
+    repository.getLastFourWeeksExpenses(userId),
   ]);
+
+  // ============================
+  // Saving
+  // ============================
 
   const salary = Number(summary.salary);
 
@@ -28,24 +34,86 @@ export const getDashboardData = async (userId) => {
   const totalMonthlySaving =
     weeklySaving * 4 + monthlySaving;
 
+  // ============================
+  // Spending
+  // ============================
+
   const monthlySpending =
     salary - totalMonthlySaving;
 
   const dailySpending =
     monthlySpending / 26;
 
+  // Saturday → Thursday = 6 days
   const weeklySpending =
     dailySpending * 6;
 
-  const totalTargetAmount = pendingTargets.reduce(
-    (sum, target) => sum + Number(target.target_amount),
-    0
-  );
+  // ============================
+  // Targets
+  // ============================
 
-  const weeklyExpenseTotal = currentWeekExpenses.reduce(
-    (sum, expense) => sum + Number(expense.total),
-    0
-  );
+  const totalTargetAmount =
+    pendingTargets.reduce(
+      (sum, target) =>
+        sum + Number(target.target_amount),
+      0
+    );
+
+  // ============================
+  // Current Week Expense
+  // ============================
+
+  const weeklyExpenseTotal =
+    currentWeekExpenses.reduce(
+      (sum, expense) =>
+        sum + Number(expense.total),
+      0
+    );
+
+  // ============================
+  // Previous 4 Weeks Expense
+  // ============================
+
+  const weeklyExpenses = {
+    week1: [],
+    week2: [],
+    week3: [],
+    week4: [],
+  };
+
+  lastFourWeeksExpenses.forEach((expense) => {
+    const item = {
+      id: expense.id,
+      date: expense.date,
+      total: Number(expense.total),
+      typeName: expense.type_name,
+    };
+
+    switch (Number(expense.week_number)) {
+      case 1:
+        weeklyExpenses.week1.push(item);
+        break;
+
+      case 2:
+        weeklyExpenses.week2.push(item);
+        break;
+
+      case 3:
+        weeklyExpenses.week3.push(item);
+        break;
+
+      case 4:
+        weeklyExpenses.week4.push(item);
+        break;
+
+      default:
+        break;
+    }
+  });
+
+  // ============================
+  // Response
+  // ============================
 
   return {
     saving: {
@@ -83,6 +151,8 @@ export const getDashboardData = async (userId) => {
         totalRecords: currentWeekExpenses.length,
         records: currentWeekExpenses,
       },
+
+      lastFourWeeks: weeklyExpenses,
     },
   };
 };

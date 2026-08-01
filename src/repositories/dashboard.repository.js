@@ -138,3 +138,80 @@ export const getCurrentWeekExpenses = async (userId) => {
   return rows;
 };
 
+export const getLastFourWeeksExpenses = async (userId) => {
+  const sql = `
+    WITH current_week AS (
+      SELECT (
+        CURRENT_DATE -
+        CASE EXTRACT(DOW FROM CURRENT_DATE)
+          WHEN 6 THEN 0 -- Saturday
+          WHEN 0 THEN 1 -- Sunday
+          WHEN 1 THEN 2 -- Monday
+          WHEN 2 THEN 3 -- Tuesday
+          WHEN 3 THEN 4 -- Wednesday
+          WHEN 4 THEN 5 -- Thursday
+          WHEN 5 THEN 6 -- Friday
+        END
+      )::date AS current_week_start
+    )
+
+    SELECT
+      er.id,
+      er.date::text AS date,
+      er.total,
+      et.name AS type_name,
+
+      CASE
+        -- Previous Week
+        WHEN er.date BETWEEN
+          (cw.current_week_start - INTERVAL '7 day')::date
+          AND
+          (cw.current_week_start - INTERVAL '2 day')::date
+        THEN 1
+
+        -- 2 Weeks Ago
+        WHEN er.date BETWEEN
+          (cw.current_week_start - INTERVAL '14 day')::date
+          AND
+          (cw.current_week_start - INTERVAL '9 day')::date
+        THEN 2
+
+        -- 3 Weeks Ago
+        WHEN er.date BETWEEN
+          (cw.current_week_start - INTERVAL '21 day')::date
+          AND
+          (cw.current_week_start - INTERVAL '16 day')::date
+        THEN 3
+
+        -- 4 Weeks Ago
+        WHEN er.date BETWEEN
+          (cw.current_week_start - INTERVAL '28 day')::date
+          AND
+          (cw.current_week_start - INTERVAL '23 day')::date
+        THEN 4
+      END AS week_number
+
+    FROM expense_records er
+    JOIN expense_types et
+      ON et.id = er.expense_type_id
+    CROSS JOIN current_week cw
+
+    WHERE
+      er.user_id = $1
+
+      -- Ignore Friday completely
+      AND EXTRACT(DOW FROM er.date) <> 5
+
+      -- Last four completed weeks only
+      AND er.date >= (cw.current_week_start - INTERVAL '28 day')::date
+      AND er.date <= (cw.current_week_start - INTERVAL '2 day')::date
+
+    ORDER BY
+      week_number,
+      er.date;
+  `;
+
+  const { rows } = await query(sql, [userId]);
+
+  return rows;
+};

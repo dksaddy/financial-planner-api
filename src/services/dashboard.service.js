@@ -1,10 +1,16 @@
 import * as repository from "../repositories/dashboard.repository.js";
 
 export const getDashboardData = async (userId) => {
-  const [summary, pendingTargets, topExpenses] = await Promise.all([
+  const [
+    summary,
+    pendingTargets,
+    topExpenses,
+    currentWeekExpenses,
+  ] = await Promise.all([
     repository.getDashboardSummary(userId),
     repository.getPendingTargets(userId),
     repository.getTopExpenseTypes(userId),
+    repository.getCurrentWeekExpenses(userId),
   ]);
 
   const salary = Number(summary.salary);
@@ -19,17 +25,26 @@ export const getDashboardData = async (userId) => {
 
   const profit = totalWithdrawal - totalDeposit;
 
-  const totalMonthlySaving = weeklySaving * 4 + monthlySaving;
+  const totalMonthlySaving =
+    weeklySaving * 4 + monthlySaving;
 
-  const monthlySpending = salary - totalMonthlySaving;
+  const monthlySpending =
+    salary - totalMonthlySaving;
 
-  const dailySpending = monthlySpending / 26;
+  const dailySpending =
+    monthlySpending / 26;
 
-  const weeklySpending = dailySpending * 6;
+  const weeklySpending =
+    dailySpending * 6;
 
   const totalTargetAmount = pendingTargets.reduce(
     (sum, target) => sum + Number(target.target_amount),
-    0,
+    0
+  );
+
+  const weeklyExpenseTotal = currentWeekExpenses.reduce(
+    (sum, expense) => sum + Number(expense.total),
+    0
   );
 
   return {
@@ -54,6 +69,7 @@ export const getDashboardData = async (userId) => {
       totalTargetAmount: Number(totalTargetAmount.toFixed(2)),
       pendingTargets,
     },
+
     expenses: {
       topExpenseTypes: topExpenses.map((expense) => ({
         id: expense.id,
@@ -61,6 +77,12 @@ export const getDashboardData = async (userId) => {
         frequency: Number(expense.frequency),
         totalAmount: Number(expense.total_amount),
       })),
+
+      currentWeek: {
+        totalExpense: Number(weeklyExpenseTotal.toFixed(2)),
+        totalRecords: currentWeekExpenses.length,
+        records: currentWeekExpenses,
+      },
     },
   };
 };

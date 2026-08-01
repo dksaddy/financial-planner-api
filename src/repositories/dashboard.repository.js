@@ -91,3 +91,50 @@ export const getTopExpenseTypes = async (userId) => {
 
   return rows;
 };
+
+export const getCurrentWeekExpenses = async (userId) => {
+  const sql = `
+    WITH week_range AS (
+      SELECT
+        (
+          CURRENT_DATE -
+          (
+            CASE
+              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 6 THEN 0
+              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 0 THEN 1
+              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 1 THEN 2
+              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 2 THEN 3
+              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 3 THEN 4
+              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 4 THEN 5
+              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 5 THEN 6
+            END
+          ) * INTERVAL '1 day'
+        )::date AS week_start
+    )
+
+    SELECT
+      er.id,
+      er.date,
+      er.total,
+      et.id AS expense_type_id,
+      et.name AS expense_type_name
+
+    FROM expense_records er
+
+    JOIN expense_types et
+      ON et.id = er.expense_type_id
+
+    CROSS JOIN week_range wr
+
+    WHERE er.user_id = $1
+      AND er.date BETWEEN wr.week_start
+                      AND wr.week_start + INTERVAL '5 day'
+
+    ORDER BY er.date ASC;
+  `;
+
+  const { rows } = await query(sql, [userId]);
+
+  return rows;
+};
+

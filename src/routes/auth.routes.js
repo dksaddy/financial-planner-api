@@ -2,7 +2,8 @@ import { Router } from "express";
 import {
   login,
   register,
-  me
+  me,
+  logout,
 } from "../controllers/auth.controller.js";
 import validate from "../middlewares/validate.middleware.js";
 import {
@@ -32,5 +33,11 @@ router.get(
   "/me",
   authenticate,
   me);
+
+router.post(
+  "/logout",
+  authenticate,
+  logout
+);
 
 export default router;

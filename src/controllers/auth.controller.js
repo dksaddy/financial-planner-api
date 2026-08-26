@@ -4,6 +4,7 @@ import {
   loginUser,
   registerUser,
   getCurrentUser,
+  logoutUser,
 } from "../services/auth.service.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { AUTH_MESSAGES } from "../constants/messages.js";
@@ -40,6 +41,18 @@ export const me = asyncHandler(async (req, res) => {
       HTTP_STATUS.OK,
       AUTH_MESSAGES.CURRENT_USER,
       user
+    )
+  );
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  await logoutUser(req.decodedToken);
+
+  return res.status(HTTP_STATUS.OK).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      AUTH_MESSAGES.LOGOUT_SUCCESS,
+      null
     )
   );
 });

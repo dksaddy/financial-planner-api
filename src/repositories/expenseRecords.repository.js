@@ -103,3 +103,19 @@ export const remove = async (id, userId) => {
 
   return result.rows[0];
 };
+
+export const sumTotalByDate = async (userId, date) => {
+  const result = await query(
+    `
+    SELECT
+        COALESCE(SUM(total), 0) AS total
+    FROM expense_records
+    WHERE
+        user_id=$1
+        AND date=$2;
+    `,
+    [userId, date]
+  );
+
+  return Number(result.rows[0].total);
+};

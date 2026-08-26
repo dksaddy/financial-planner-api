@@ -9,6 +9,7 @@ export const COMMON_MESSAGES = {
 export const AUTH_MESSAGES = {
   REGISTER_SUCCESS: "User registered successfully",
   LOGIN_SUCCESS: "Login successful",
+  LOGOUT_SUCCESS: "Logged out successfully",
   CURRENT_USER: "Current user",
 
   EMAIL_EXISTS: "Email already exists",

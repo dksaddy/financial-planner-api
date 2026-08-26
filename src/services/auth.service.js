@@ -4,6 +4,7 @@ import { generateToken } from "../utils/jwt.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { AUTH_MESSAGES } from "../constants/messages.js";
 import * as userRepository from "../repositories/user.repository.js";
+import * as tokenDenylistRepository from "../repositories/tokenDenylist.repository.js";
 
 export const registerUser = async ({ name, email, password }) => {
   const existingUser = await userRepository.findByEmail(email);
@@ -74,4 +75,17 @@ export const getCurrentUser = async (userId) => {
   }
 
   return user;
+};
+
+export const logoutUser = async (decodedToken) => {
+  const { jti, id: userId, exp } = decodedToken;
+
+  // exp is in seconds (JWT standard); convert to a JS Date for storage.
+  const expiresAt = new Date(exp * 1000);
+
+  await tokenDenylistRepository.revoke({
+    jti,
+    userId,
+    expiresAt,
+  });
 };

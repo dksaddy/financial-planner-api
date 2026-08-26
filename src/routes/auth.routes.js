@@ -10,24 +10,27 @@ import {
   registerSchema,
 } from "../validations/auth.validation.js";
 import authenticate from "../middlewares/auth.middleware.js";
+import { authLimiter } from "../middlewares/rateLimit.middleware.js";
 
 const router = Router();
 
 router.post(
   "/register",
+  authLimiter,
   validate(registerSchema),
   register
 );
 
 router.post(
   "/login",
+  authLimiter,
   validate(loginSchema),
   login
 );
 
 router.get(
-  "/me", 
-  authenticate, 
+  "/me",
+  authenticate,
   me);
 
 export default router;

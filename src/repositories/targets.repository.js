@@ -100,3 +100,20 @@ export const remove = async (
     [id, userId]
   );
 };
+
+export const getTotalCompletedAmount = async (
+  userId
+) => {
+  const { rows } = await query(
+    `
+    SELECT
+      COALESCE(SUM(target_amount), 0) AS total
+    FROM targets
+    WHERE user_id=$1
+    AND status='completed'
+    `,
+    [userId]
+  );
+
+  return Number(rows[0].total);
+};

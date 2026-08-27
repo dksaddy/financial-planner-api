@@ -1,4 +1,8 @@
 import * as repository from "../repositories/dashboard.repository.js";
+import * as dailyExtraSavingsRepository from "../repositories/dailyExtraSavings.repository.js";
+import * as extraSavingsService from "./extraSavings.service.js";
+import { calculateBudget } from "../utils/budget.js";
+import { toDateString } from "../utils/date.js";
 
 export const getDashboardData = async (userId) => {
   const [
@@ -7,12 +11,14 @@ export const getDashboardData = async (userId) => {
     topExpenses,
     currentWeekExpenses,
     lastFourWeeksExpenses,
+    extraSaving,
   ] = await Promise.all([
     repository.getDashboardSummary(userId),
     repository.getPendingTargets(userId),
     repository.getTopExpenseTypes(userId),
     repository.getCurrentWeekExpenses(userId),
     repository.getLastFourWeeksExpenses(userId),
+    extraSavingsService.getTotalExtraSave(userId),
   ]);
 
   // ============================
@@ -31,22 +37,20 @@ export const getDashboardData = async (userId) => {
 
   const profit = totalWithdrawal - totalDeposit;
 
-  const totalMonthlySaving =
-    weeklySaving * 4 + monthlySaving;
-
   // ============================
-  // Spending
+  // Spending (shared with Extra Saving's daily budget)
   // ============================
 
-  const monthlySpending =
-    salary - totalMonthlySaving;
-
-  const dailySpending =
-    monthlySpending / 26;
-
-  // Saturday → Thursday = 6 days
-  const weeklySpending =
-    dailySpending * 6;
+  const {
+    totalMonthlySaving,
+    monthlySpending,
+    dailyBudget: dailySpending,
+    weeklyBudget: weeklySpending,
+  } = calculateBudget({
+    salary,
+    weeklySaving,
+    monthlySaving,
+  });
 
   // ============================
   // Targets
@@ -60,7 +64,7 @@ export const getDashboardData = async (userId) => {
     );
 
   // ============================
-  // Current Week Expense
+  // Current Week Expense + per-day Extra Save
   // ============================
 
   const weeklyExpenseTotal =
@@ -69,6 +73,45 @@ export const getDashboardData = async (userId) => {
         sum + Number(expense.total),
       0
     );
+
+  // Only look up daily_extra_savings for dates that actually have
+  // expense records this week (a day with no expense record has no
+  // extra save figure yet — it's only calculated on insert).
+  const currentWeekDates = [
+    ...new Set(
+      currentWeekExpenses.map((expense) =>
+        toDateString(expense.date)
+      )
+    ),
+  ].sort();
+
+  let dailySavingsByDate = {};
+
+  if (currentWeekDates.length > 0) {
+    const rows = await dailyExtraSavingsRepository.findByDateRange(
+      userId,
+      currentWeekDates[0],
+      currentWeekDates[currentWeekDates.length - 1]
+    );
+
+    rows.forEach((row) => {
+      dailySavingsByDate[toDateString(row.date)] = Number(
+        row.extra_amount
+      );
+    });
+  }
+
+  const currentWeekRecords = currentWeekExpenses.map(
+    (expense) => ({
+      ...expense,
+      extraSave:
+        dailySavingsByDate[toDateString(expense.date)] ?? null,
+    })
+  );
+
+  const currentWeekTotalExtraSave = Object.values(
+    dailySavingsByDate
+  ).reduce((sum, value) => sum + value, 0);
 
   // ============================
   // Previous 4 Weeks Expense
@@ -132,6 +175,8 @@ export const getDashboardData = async (userId) => {
       daily: Number(dailySpending.toFixed(2)),
     },
 
+    extraSaving,
+
     targets: {
       totalPendingTargets: pendingTargets.length,
       totalTargetAmount: Number(totalTargetAmount.toFixed(2)),
@@ -149,7 +194,10 @@ export const getDashboardData = async (userId) => {
       currentWeek: {
         totalExpense: Number(weeklyExpenseTotal.toFixed(2)),
         totalRecords: currentWeekExpenses.length,
-        records: currentWeekExpenses,
+        totalExtraSave: Number(
+          currentWeekTotalExtraSave.toFixed(2)
+        ),
+        records: currentWeekRecords,
       },
 
       lastFourWeeks: weeklyExpenses,

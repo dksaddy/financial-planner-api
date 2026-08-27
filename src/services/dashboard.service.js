@@ -114,8 +114,35 @@ export const getDashboardData = async (userId) => {
   ).reduce((sum, value) => sum + value, 0);
 
   // ============================
-  // Previous 4 Weeks Expense
+  // Previous 4 Weeks Expense + per-day Extra Save
   // ============================
+
+  // Same approach as the current week's lookup above: only fetch
+  // daily_extra_savings for dates that actually have an expense
+  // record in the last four weeks, in one range query.
+  const lastFourWeeksDates = [
+    ...new Set(
+      lastFourWeeksExpenses.map((expense) =>
+        toDateString(expense.date)
+      )
+    ),
+  ].sort();
+
+  let lastFourWeeksSavingsByDate = {};
+
+  if (lastFourWeeksDates.length > 0) {
+    const rows = await dailyExtraSavingsRepository.findByDateRange(
+      userId,
+      lastFourWeeksDates[0],
+      lastFourWeeksDates[lastFourWeeksDates.length - 1]
+    );
+
+    rows.forEach((row) => {
+      lastFourWeeksSavingsByDate[toDateString(row.date)] = Number(
+        row.extra_amount
+      );
+    });
+  }
 
   const weeklyExpenses = {
     week1: [],
@@ -130,6 +157,10 @@ export const getDashboardData = async (userId) => {
       date: expense.date,
       total: Number(expense.total),
       typeName: expense.type_name,
+      extraSave:
+        lastFourWeeksSavingsByDate[
+          toDateString(expense.date)
+        ] ?? null,
     };
 
     switch (Number(expense.week_number)) {

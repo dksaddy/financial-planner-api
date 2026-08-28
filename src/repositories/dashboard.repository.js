@@ -5,13 +5,18 @@ export const getDashboardSummary = async (userId) => {
     SELECT
       u.salary,
 
+      -- Total deposit/withdrawal reflect ALL saving plans regardless of
+      -- status (active, completed, or cancelled), so the summary card
+      -- rolls up the whole saving history, not just what's in progress.
       COALESCE(SUM(sp.deposit_amount), 0) AS total_deposit,
       COALESCE(SUM(sp.withdrawal_amount), 0) AS total_withdrawal,
 
+      -- Weekly/monthly recurring saving figures stay scoped to ACTIVE
+      -- plans only, since they represent ongoing contributions.
       COALESCE(
         SUM(
           CASE
-            WHEN sp.frequency = 7 THEN sp.amount
+            WHEN sp.status = 'active' AND sp.frequency = 7 THEN sp.amount
             ELSE 0
           END
         ),
@@ -21,7 +26,7 @@ export const getDashboardSummary = async (userId) => {
       COALESCE(
         SUM(
           CASE
-            WHEN sp.frequency = 30 THEN sp.amount
+            WHEN sp.status = 'active' AND sp.frequency = 30 THEN sp.amount
             ELSE 0
           END
         ),
@@ -31,7 +36,6 @@ export const getDashboardSummary = async (userId) => {
     FROM users u
     LEFT JOIN saving_plans sp
       ON sp.user_id = u.id
-      AND sp.status = 'active'
 
     WHERE u.id = $1
 
@@ -59,6 +63,7 @@ export const getSavingPlans = async (userId) => {
       created_at
     FROM saving_plans
     WHERE user_id = $1
+      AND status <> 'completed'
     ORDER BY created_at DESC;
   `;
 

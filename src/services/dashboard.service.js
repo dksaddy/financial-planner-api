@@ -53,10 +53,19 @@ export const getDashboardData = async (userId) => {
       id: plan.id,
       name: plan.name,
       status: plan.status,
+      amount: Number(plan.amount),
+      frequency: Number(plan.frequency),
+      months: Number(plan.months),
       depositAmount,
+      depositFrequency: Number(plan.deposit_frequency),
       currentlyDeposited,
+      withdrawalAmount: Number(plan.withdrawal_amount),
+      profit: Number(
+        (Number(plan.withdrawal_amount) - depositAmount).toFixed(2)
+      ),
       remaining: Number(remaining.toFixed(2)),
       percentage: Number(percentage.toFixed(2)),
+      createdAt: plan.created_at,
     };
   });
 

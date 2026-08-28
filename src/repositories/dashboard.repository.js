@@ -48,9 +48,15 @@ export const getSavingPlans = async (userId) => {
     SELECT
       id,
       name,
+      amount,
+      frequency,
+      months,
       deposit_amount,
+      deposit_frequency,
       currently_deposited,
-      status
+      withdrawal_amount,
+      status,
+      created_at
     FROM saving_plans
     WHERE user_id = $1
     ORDER BY created_at DESC;

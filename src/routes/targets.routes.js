@@ -2,6 +2,7 @@ import express from "express";
 
 import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
+import upload from "../middlewares/upload.middleware.js";
 
 import {
   createTarget,
@@ -22,6 +23,7 @@ router.use(authenticate);
 
 router.post(
   "/",
+  upload.single("image"),
   validate(createTargetSchema),
   createTarget
 );

@@ -4,6 +4,7 @@ export const create = async ({
   userId,
   name,
   target_amount,
+  image_url = null,
 }) => {
   const { rows } = await query(
     `
@@ -11,12 +12,13 @@ export const create = async ({
     (
       user_id,
       name,
-      target_amount
+      target_amount,
+      image_url
     )
-    VALUES ($1,$2,$3)
+    VALUES ($1,$2,$3,$4)
     RETURNING *
     `,
-    [userId, name, target_amount]
+    [userId, name, target_amount, image_url]
   );
 
   return rows[0];

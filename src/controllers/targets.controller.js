@@ -10,7 +10,8 @@ export const createTarget =
     const target =
       await targetService.createTarget(
         req.user.id,
-        req.body
+        req.body,
+        req.file
       );
 
     return res.status(

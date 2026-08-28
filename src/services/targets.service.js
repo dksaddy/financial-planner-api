@@ -1,16 +1,47 @@
 import * as targetRepository from "../repositories/targets.repository.js";
+import { supabase } from "../config/supabase.js";
+import { v4 as uuid } from "uuid";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { TARGET_MESSAGES } from "../constants/messages.js";
 
 export const createTarget = async (
   userId,
-  body
+  body,
+  file
 ) => {
+
+  let image_url = null;
+
+  if (file) {
+    const extension = file.originalname.split(".").pop();
+    const fileName = `${userId}/targets/${uuid()}.${extension}`;
+
+    const { error } = await supabase.storage
+      .from(process.env.SUPABASE_BUCKET)
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: true,
+      });
+
+    if (error) {
+      throw new AppError(
+        error.message,
+        HTTP_STATUS.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    const { data } = supabase.storage
+      .from(process.env.SUPABASE_BUCKET)
+      .getPublicUrl(fileName);
+
+    image_url = data.publicUrl;
+  }
 
   return await targetRepository.create({
     userId,
     ...body,
+    image_url,
   });
 
 };

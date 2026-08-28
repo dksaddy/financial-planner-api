@@ -67,6 +67,7 @@ export const getPendingTargets = async (userId) => {
       id,
       name,
       target_amount,
+      image_url,
       status,
       created_at
     FROM targets

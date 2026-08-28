@@ -8,6 +8,7 @@ export const createTargetSchema = z.object({
     .max(100, "Target name cannot exceed 100 characters."),
 
   target_amount: z
+    .coerce
     .number()
     .positive("Target amount must be greater than 0."),
 });
@@ -21,6 +22,7 @@ export const updateTargetSchema = z.object({
     .optional(),
 
   target_amount: z
+    .coerce
     .number()
     .positive()
     .optional(),

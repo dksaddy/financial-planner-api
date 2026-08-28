@@ -96,6 +96,23 @@ export const update = async (id, userId, data) => {
   return result.rows[0];
 };
 
+export const addDeposit = async (id, userId, amount) => {
+  const result = await query(
+    `
+    UPDATE saving_plans
+    SET
+      currently_deposited = currently_deposited + $3,
+      updated_at = NOW()
+    WHERE id = $1
+      AND user_id = $2
+    RETURNING *;
+    `,
+    [id, userId, amount]
+  );
+
+  return result.rows[0];
+};
+
 export const remove = async (id, userId) => {
   const result = await query(
     `

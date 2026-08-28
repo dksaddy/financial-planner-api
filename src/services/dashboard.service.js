@@ -7,6 +7,7 @@ import { toDateString } from "../utils/date.js";
 export const getDashboardData = async (userId) => {
   const [
     summary,
+    savingPlans,
     pendingTargets,
     topExpenses,
     currentWeekExpenses,
@@ -14,6 +15,7 @@ export const getDashboardData = async (userId) => {
     extraSaving,
   ] = await Promise.all([
     repository.getDashboardSummary(userId),
+    repository.getSavingPlans(userId),
     repository.getPendingTargets(userId),
     repository.getTopExpenseTypes(userId),
     repository.getCurrentWeekExpenses(userId),
@@ -36,6 +38,27 @@ export const getDashboardData = async (userId) => {
   const monthlySaving = Number(summary.monthly_saving);
 
   const profit = totalWithdrawal - totalDeposit;
+
+  const savingPlanProgress = savingPlans.map((plan) => {
+    const depositAmount = Number(plan.deposit_amount);
+    const currentlyDeposited = Number(plan.currently_deposited);
+    const remaining = Math.max(depositAmount - currentlyDeposited, 0);
+
+    const percentage =
+      depositAmount > 0
+        ? Math.min((currentlyDeposited / depositAmount) * 100, 100)
+        : 0;
+
+    return {
+      id: plan.id,
+      name: plan.name,
+      status: plan.status,
+      depositAmount,
+      currentlyDeposited,
+      remaining: Number(remaining.toFixed(2)),
+      percentage: Number(percentage.toFixed(2)),
+    };
+  });
 
   // ============================
   // Spending (shared with Extra Saving's daily budget)
@@ -197,6 +220,7 @@ export const getDashboardData = async (userId) => {
       weeklySaving,
       monthlySaving,
       totalMonthlySaving,
+      plans: savingPlanProgress,
     },
 
     spending: {

@@ -4,11 +4,15 @@ import {
   getAll,
   getById,
   update,
+  deposit,
   remove,
 } from "../controllers/savingPlans.controller.js";
 import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
-import { createSavingPlanSchema } from "../validations/savingPlans.validation.js";
+import {
+  createSavingPlanSchema,
+  depositSavingPlanSchema,
+} from "../validations/savingPlans.validation.js";
 
 const router = Router();
 
@@ -21,6 +25,8 @@ router.get("/", getAll);
 router.get("/:id", getById);
 
 router.put("/:id", validate(createSavingPlanSchema), update);
+
+router.patch("/:id/deposit", validate(depositSavingPlanSchema), deposit);
 
 router.delete("/:id", remove);
 

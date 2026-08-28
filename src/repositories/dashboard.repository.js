@@ -43,6 +43,24 @@ export const getDashboardSummary = async (userId) => {
   return rows[0];
 };
 
+export const getSavingPlans = async (userId) => {
+  const sql = `
+    SELECT
+      id,
+      name,
+      deposit_amount,
+      currently_deposited,
+      status
+    FROM saving_plans
+    WHERE user_id = $1
+    ORDER BY created_at DESC;
+  `;
+
+  const { rows } = await query(sql, [userId]);
+
+  return rows;
+};
+
 export const getPendingTargets = async (userId) => {
   const sql = `
     SELECT

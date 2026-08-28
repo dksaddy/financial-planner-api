@@ -31,6 +31,23 @@ export const updateSavingPlan = async (id, userId, data) => {
   return await repository.update(id, userId, data);
 };
 
+export const depositToSavingPlan = async (id, userId, amount) => {
+  const existing = await repository.findById(id, userId);
+
+  if (!existing) {
+    throw new AppError("Saving plan not found", HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (existing.status !== "active") {
+    throw new AppError(
+      "Deposits can only be added to active saving plans",
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
+  return await repository.addDeposit(id, userId, amount);
+};
+
 export const deleteSavingPlan = async (id, userId) => {
   const existing = await repository.findById(id, userId);
 

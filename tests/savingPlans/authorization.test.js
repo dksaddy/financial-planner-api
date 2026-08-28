@@ -72,4 +72,24 @@ describe("Saving Plans Authorization", () => {
     expect(response.status).toBe(404);
     expect(response.body.success).toBe(false);
   });
+
+  it("should not allow another user to deposit into a saving plan", async () => {
+    const { token: ownerToken } = await login();
+
+    const { plan } = await createSavingPlan(ownerToken);
+
+    const { token: otherToken } =
+      await loginSecondUser();
+
+    const response = await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set(
+        "Authorization",
+        `Bearer ${otherToken}`
+      )
+      .send({ amount: 100 });
+
+    expect(response.status).toBe(404);
+    expect(response.body.success).toBe(false);
+  });
 });

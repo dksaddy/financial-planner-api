@@ -27,3 +27,7 @@ export const createSavingPlanSchema = z.object({
 
   withdrawalAmount: z.number().min(0),
 });
+
+export const depositSavingPlanSchema = z.object({
+  amount: z.number().positive("Deposit amount must be greater than 0"),
+});

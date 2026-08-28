@@ -6,6 +6,7 @@ import {
   getAllSavingPlans,
   getSavingPlanById,
   updateSavingPlan,
+  depositToSavingPlan,
   deleteSavingPlan,
 } from "../services/savingPlans.service.js";
 
@@ -67,6 +68,22 @@ export const update = asyncHandler(async (req, res) => {
   );
 });
 
+export const deposit = asyncHandler(async (req, res) => {
+  const plan = await depositToSavingPlan(
+    req.params.id,
+    req.user.id,
+    req.body.amount
+  );
+
+  return res.status(HTTP_STATUS.OK).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      "Deposit added successfully",
+      plan
+    )
+  );
+});
+
 export const remove = asyncHandler(async (req, res) => {
   await deleteSavingPlan(
     req.params.id,
@@ -80,4 +97,3 @@ export const remove = asyncHandler(async (req, res) => {
     )
   );
 });
-

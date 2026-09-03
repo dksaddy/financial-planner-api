@@ -52,7 +52,6 @@ export const getTotalExtraSave = async (userId) => {
 
   return {
     totalExtraSave: Number(totalExtraSave.toFixed(2)),
-    totalFromDailySavings: Number(totalFromDays.toFixed(2)),
     totalDeductedByTargets: Number(
       totalDeductedByTargets.toFixed(2)
     ),

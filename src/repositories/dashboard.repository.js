@@ -114,7 +114,7 @@ export const getTopExpenseTypes = async (userId) => {
       COUNT(er.id) DESC,
       SUM(er.total) DESC
 
-    LIMIT 3;
+    LIMIT 4;
   `;
 
   const { rows } = await query(sql, [userId]);

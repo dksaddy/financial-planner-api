@@ -6,6 +6,14 @@ import { toDateString } from "../utils/date.js";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 
+// Belt-and-braces: guarantee every record leaving this service has a
+// plain "YYYY-MM-DD" `date` string, regardless of whether it arrived
+// as a string (already fixed at the pg layer) or, if that ever
+// regresses, as a timezone-sensitive JS Date object. Never trust a
+// `date` column value on its way out without passing it through this.
+const withNormalizedDate = (record) =>
+  record ? { ...record, date: toDateString(record.date) } : record;
+
 export const createExpenseRecord = async (userId, data) => {
   const expenseType = await expenseTypeRepository.findById(
     data.expense_type_id,
@@ -30,11 +38,12 @@ export const createExpenseRecord = async (userId, data) => {
     data.date
   );
 
-  return record;
+  return withNormalizedDate(record);
 };
 
 export const getAllExpenseRecords = async (userId) => {
-  return await repository.findAllByUserId(userId);
+  const records = await repository.findAllByUserId(userId);
+  return records.map(withNormalizedDate);
 };
 
 export const getExpenseRecordById = async (id, userId) => {
@@ -47,7 +56,7 @@ export const getExpenseRecordById = async (id, userId) => {
     );
   }
 
-  return record;
+  return withNormalizedDate(record);
 };
 
 export const updateExpenseRecord = async (
@@ -111,7 +120,7 @@ export const updateExpenseRecord = async (
     );
   }
 
-  return record;
+  return withNormalizedDate(record);
 };
 
 export const deleteExpenseRecord = async (

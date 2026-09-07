@@ -136,6 +136,7 @@ export const getDashboardData = async (userId) => {
   const currentWeekRecords = currentWeekExpenses.map(
     (expense) => ({
       ...expense,
+      date: toDateString(expense.date),
       extraSave:
         dailySavingsByDate[toDateString(expense.date)] ?? null,
     })
@@ -186,7 +187,7 @@ export const getDashboardData = async (userId) => {
   lastFourWeeksExpenses.forEach((expense) => {
     const item = {
       id: expense.id,
-      date: expense.date,
+      date: toDateString(expense.date),
       total: Number(expense.total),
       typeName: expense.type_name,
       extraSave:

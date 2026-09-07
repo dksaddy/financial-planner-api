@@ -11,6 +11,15 @@ export const createTargetSchema = z.object({
     .coerce
     .number()
     .positive("Target amount must be greater than 0."),
+
+  // Set when the user picks one of their existing target pictures
+  // instead of uploading a new file.
+  image_url: z
+    .string()
+    .trim()
+    .url("Invalid image URL.")
+    .optional()
+    .or(z.literal("")),
 });
 
 export const updateTargetSchema = z.object({

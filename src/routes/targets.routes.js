@@ -7,6 +7,7 @@ import upload from "../middlewares/upload.middleware.js";
 import {
   createTarget,
   getTargets,
+  getTargetImages,
   getTarget,
   updateTarget,
   deleteTarget,
@@ -31,6 +32,12 @@ router.post(
 router.get(
   "/",
   getTargets
+);
+
+// Must come before "/:id" or "images" would be parsed as an id.
+router.get(
+  "/images",
+  getTargetImages
 );
 
 router.get(

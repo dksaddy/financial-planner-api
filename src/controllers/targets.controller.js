@@ -46,6 +46,26 @@ export const getTargets =
 
   });
 
+export const getTargetImages =
+  asyncHandler(async (req, res) => {
+
+    const images =
+      await targetService.getTargetImages(
+        req.user.id
+      );
+
+    return res.status(
+      HTTP_STATUS.OK
+    ).json(
+      new ApiResponse(
+        HTTP_STATUS.OK,
+        TARGET_MESSAGES.FETCHED_IMAGES,
+        images
+      )
+    );
+
+  });
+
 export const getTarget =
   asyncHandler(async (req, res) => {
 

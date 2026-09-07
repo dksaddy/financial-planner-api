@@ -38,6 +38,23 @@ export const findAllByUser = async (userId) => {
   return rows;
 };
 
+export const findDistinctImages = async (userId) => {
+  const { rows } = await query(
+    `
+    SELECT DISTINCT ON (image_url)
+      image_url,
+      name
+    FROM targets
+    WHERE user_id=$1
+    AND image_url IS NOT NULL
+    ORDER BY image_url, created_at DESC
+    `,
+    [userId]
+  );
+
+  return rows;
+};
+
 export const findById = async (
   id,
   userId

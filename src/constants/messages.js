@@ -24,6 +24,7 @@ export const TARGET_MESSAGES = {
   CREATED: "Target created successfully",
   FETCHED: "Targets fetched successfully",
   FETCHED_ONE: "Target fetched successfully",
+  FETCHED_IMAGES: "Target images fetched successfully",
   UPDATED: "Target updated successfully",
   DELETED: "Target deleted successfully",
   NOT_FOUND: "Target not found",

@@ -14,9 +14,11 @@ import { HTTP_STATUS } from "../constants/httpStatus.js";
 const withNormalizedDate = (record) =>
   record ? { ...record, date: toDateString(record.date) } : record;
 
-export const createExpenseRecord = async (userId, data) => {
+// Expense types are deactivated instead of deleted, and a deactivated
+// type must not back any new or re-pointed record.
+const loadActiveExpenseType = async (expenseTypeId, userId) => {
   const expenseType = await expenseTypeRepository.findById(
-    data.expense_type_id,
+    expenseTypeId,
     userId
   );
 
@@ -26,6 +28,22 @@ export const createExpenseRecord = async (userId, data) => {
       HTTP_STATUS.NOT_FOUND
     );
   }
+
+  if (!expenseType.is_active) {
+    throw new AppError(
+      "Expense type is inactive",
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
+  return expenseType;
+};
+
+export const createExpenseRecord = async (userId, data) => {
+  const expenseType = await loadActiveExpenseType(
+    data.expense_type_id,
+    userId
+  );
 
   const record = await repository.create(userId, {
     expense_type_id: data.expense_type_id,
@@ -41,9 +59,48 @@ export const createExpenseRecord = async (userId, data) => {
   return withNormalizedDate(record);
 };
 
-export const getAllExpenseRecords = async (userId) => {
-  const records = await repository.findAllByUserId(userId);
-  return records.map(withNormalizedDate);
+// Paginated list. `summary` and `months` describe the whole filtered set
+// and the user's full history respectively, so the caller can render an
+// accurate header and month filter without holding every record.
+export const getAllExpenseRecords = async (
+  userId,
+  { page = 1, limit = 10, month } = {}
+) => {
+  const [summary, months] = await Promise.all([
+    repository.summarizeByUserId(userId, { month }),
+    repository.findMonthsByUserId(userId),
+  ]);
+
+  const total = Number(summary.total);
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+
+  // A page past the end returns the last page rather than an empty list:
+  // deleting the final record of the last page would otherwise strand the
+  // client on a page that no longer exists.
+  const currentPage = Math.min(page, totalPages);
+
+  const records = await repository.findPageByUserId(userId, {
+    limit,
+    offset: (currentPage - 1) * limit,
+    month,
+  });
+
+  return {
+    records: records.map(withNormalizedDate),
+    pagination: {
+      page: currentPage,
+      limit,
+      total,
+      totalPages,
+      hasPrevious: currentPage > 1,
+      hasNext: currentPage < totalPages,
+    },
+    summary: {
+      total_amount: summary.total_amount,
+    },
+    months,
+  };
 };
 
 export const getExpenseRecordById = async (id, userId) => {
@@ -73,17 +130,10 @@ export const updateExpenseRecord = async (
     );
   }
 
-  const expenseType = await expenseTypeRepository.findById(
+  const expenseType = await loadActiveExpenseType(
     data.expense_type_id,
     userId
   );
-
-  if (!expenseType) {
-    throw new AppError(
-      "Expense type not found",
-      HTTP_STATUS.NOT_FOUND
-    );
-  }
 
   const record = await repository.update(
     id,

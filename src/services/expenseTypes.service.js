@@ -3,6 +3,10 @@ import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { calculateExpenseTotal } from "../utils/calculation.js";
 
+// `total` is numeric(10,2) in the database and a float in JS, so compare
+// the two as integer cents rather than trusting float equality.
+const toCents = (amount) => Math.round(Number(amount) * 100);
+
 export const createExpenseType = async (userId, data) => {
   const total = calculateExpenseTotal(data.categories);
 
@@ -12,8 +16,17 @@ export const createExpenseType = async (userId, data) => {
   });
 };
 
-export const getAllExpenseTypes = async (userId) => {
-  return await repository.findAllByUserId(userId);
+export const getAllExpenseTypes = async (userId, status = "all") => {
+  if (!["active", "inactive", "all"].includes(status)) {
+    throw new AppError(
+      "Status must be one of: active, inactive, all",
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
+  const isActive = status === "all" ? undefined : status === "active";
+
+  return await repository.findAllByUserId(userId, isActive);
 };
 
 export const getExpenseTypeById = async (id, userId) => {
@@ -26,34 +39,30 @@ export const getExpenseTypeById = async (id, userId) => {
   return expenseType;
 };
 
-export const updateExpenseType = async (
-  id,
-  userId,
-  data
-) => {
+// Editing is limited to reshaping the categories and renaming the type.
+// The total is frozen: expense_records copy it at creation time, so
+// changing it here would silently desync every historical record.
+export const updateExpenseType = async (id, userId, data) => {
+  const existing = await repository.findById(id, userId);
+
+  if (!existing) {
+    throw new AppError("Expense type not found", HTTP_STATUS.NOT_FOUND);
+  }
+
   const total = calculateExpenseTotal(data.categories);
 
-  const expenseType = await repository.update(
-    id,
-    userId,
-    {
-      ...data,
-      total,
-    }
-  );
-
-  if (!expenseType) {
+  if (toCents(total) !== toCents(existing.total)) {
     throw new AppError(
-      "Expense type not found",
-      HTTP_STATUS.NOT_FOUND
+      `Total amount must remain ${Number(existing.total).toFixed(2)}`,
+      HTTP_STATUS.BAD_REQUEST
     );
   }
 
-  return expenseType;
+  return await repository.update(id, userId, data);
 };
 
-export const deleteExpenseType = async (id, userId) => {
-  const expenseType = await repository.remove(id, userId);
+export const setExpenseTypeStatus = async (id, userId, isActive) => {
+  const expenseType = await repository.updateStatus(id, userId, isActive);
 
   if (!expenseType) {
     throw new AppError("Expense type not found", HTTP_STATUS.NOT_FOUND);

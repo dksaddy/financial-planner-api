@@ -47,6 +47,15 @@ Layered, one file per resource per layer, all ESM (`"type": "module"`, always us
   `user_id` — that scoping, not a separate authorization layer, is how multi-tenancy is enforced. New
   repository methods must keep taking `userId` and filtering on it.
 
+Pagination: `GET /expense-records` is the reference implementation. Query strings are validated by
+`validateQuery(schema)`, which writes the coerced values to **`req.validatedQuery`** — Express 5's
+`req.query` is a getter with no setter, so it cannot be replaced in place. `data` stays a plain array
+and everything describing the full result set goes in `ApiResponse`'s optional fourth argument, `meta`
+(`{ pagination, summary, months }`); `meta` is omitted from the JSON entirely when not passed, so other
+endpoints keep their exact shape. Paged list queries must carry a tiebreaker in the `ORDER BY`
+(`date DESC, created_at DESC, id DESC`) or rows shift between pages, and the service clamps a page past
+the end to the last page rather than returning an empty list.
+
 Errors: `AppError` sets `isOperational`. `error.middleware.js` only echoes messages from operational
 errors; anything else becomes a generic 500 with the real error logged server-side. Validation failures
 short-circuit in `validate.middleware.js` with a different shape (`{ success, message, errors[] }` — no
@@ -63,6 +72,13 @@ mutation. `expenseRecords.service.js` calls `extraSavingsService.recalculateDayE
 after every create/update/delete (and for update, for the old date too when the date changed). Any new
 path that touches expense records must do the same or the dashboard figures go stale. Total extra save =
 sum of daily rows minus completed targets' amounts.
+
+**Expense types** — an expense type's `total` is frozen after creation, because `expense_records`
+snapshot it at creation time; `PUT /expense-types/:id` recomputes the total from the submitted
+categories and rejects the update with a 400 unless it still equals the stored total (compared as
+integer cents). Types are never deleted — `PATCH /expense-types/:id/status` flips `is_active`, and
+`expenseRecords.service.js` refuses to create or re-point a record onto an inactive type. `GET
+/expense-types` returns everything unless `?status=active|inactive` narrows it.
 
 **Dates** — `pg` returns `date` columns as JS `Date`, while validated request bodies carry
 `"YYYY-MM-DD"` strings. Always normalize with `toDateString()` from `src/utils/date.js` before comparing

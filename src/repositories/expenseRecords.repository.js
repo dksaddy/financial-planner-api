@@ -27,7 +27,39 @@ export const create = async (userId, data) => {
   return result.rows[0];
 };
 
-export const findAllByUserId = async (userId) => {
+// A month filter is expressed as a half-open date range rather than a
+// to_char() comparison, so the (user_id, date) index still applies.
+const monthRange = (month) => {
+  const [year, monthNumber] = month.split("-").map(Number);
+
+  const start = new Date(Date.UTC(year, monthNumber - 1, 1));
+  const end = new Date(Date.UTC(year, monthNumber, 1));
+
+  return [start.toISOString().slice(0, 10), end.toISOString().slice(0, 10)];
+};
+
+// Same-date rows need a tiebreaker, otherwise a row can be shown twice or
+// skipped entirely as the offset moves across pages.
+const ORDER_BY = "ORDER BY er.date DESC, er.created_at DESC, er.id DESC";
+
+export const findPageByUserId = async (
+  userId,
+  { limit, offset, month }
+) => {
+  const params = [userId];
+
+  let filter = "";
+
+  if (month) {
+    const [start, end] = monthRange(month);
+
+    params.push(start, end);
+
+    filter = `AND er.date >= $${params.length - 1} AND er.date < $${params.length}`;
+  }
+
+  params.push(limit, offset);
+
   const result = await query(
     `
     SELECT
@@ -37,12 +69,61 @@ export const findAllByUserId = async (userId) => {
     JOIN expense_types et
         ON et.id = er.expense_type_id
     WHERE er.user_id = $1
-    ORDER BY er.date DESC;
+    ${filter}
+    ${ORDER_BY}
+    LIMIT $${params.length - 1}
+    OFFSET $${params.length};
+    `,
+    params
+  );
+
+  return result.rows;
+};
+
+// Totals describe the whole filtered set, not the page — the client cannot
+// derive either from ten rows.
+export const summarizeByUserId = async (userId, { month } = {}) => {
+  const params = [userId];
+
+  let filter = "";
+
+  if (month) {
+    const [start, end] = monthRange(month);
+
+    params.push(start, end);
+
+    filter = `AND er.date >= $${params.length - 1} AND er.date < $${params.length}`;
+  }
+
+  const result = await query(
+    `
+    SELECT
+        COUNT(*)::int AS total,
+        COALESCE(SUM(er.total), 0)::numeric(12,2) AS total_amount
+    FROM expense_records er
+    WHERE er.user_id = $1
+    ${filter};
+    `,
+    params
+  );
+
+  return result.rows[0];
+};
+
+// Every month the user has a record in, newest first — the month filter
+// tabs cannot be built from a single page of results.
+export const findMonthsByUserId = async (userId) => {
+  const result = await query(
+    `
+    SELECT DISTINCT to_char(er.date, 'YYYY-MM') AS month
+    FROM expense_records er
+    WHERE er.user_id = $1
+    ORDER BY month DESC;
     `,
     [userId]
   );
 
-  return result.rows;
+  return result.rows.map((row) => row.month);
 };
 
 export const findById = async (id, userId) => {

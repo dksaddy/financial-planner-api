@@ -28,13 +28,25 @@ export const create = asyncHandler(async (req,res)=>{
 
 export const getAll = asyncHandler(async(req,res)=>{
 
-    const records = await getAllExpenseRecords(req.user.id);
+    // validateQuery puts the coerced values here — Express 5's req.query
+    // is read-only, so it cannot be replaced in place.
+    const { page, limit, month } = req.validatedQuery;
+
+    const result = await getAllExpenseRecords(
+        req.user.id,
+        { page, limit, month }
+    );
 
     res.json(
         new ApiResponse(
             200,
             "Expense records fetched successfully",
-            records
+            result.records,
+            {
+                pagination: result.pagination,
+                summary: result.summary,
+                months: result.months,
+            }
         )
     );
 

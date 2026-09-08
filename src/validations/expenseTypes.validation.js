@@ -20,3 +20,13 @@ export const createExpenseTypeSchema = z.object({
     .array(categorySchema)
     .min(1, "At least one category is required"),
 });
+
+// Same shape as create — the total is not a field, it is derived from
+// the categories and must come out equal to the stored total.
+export const updateExpenseTypeSchema = createExpenseTypeSchema;
+
+export const updateExpenseTypeStatusSchema = z.object({
+  is_active: z.boolean({
+    error: "is_active must be a boolean",
+  }),
+});

@@ -27,15 +27,18 @@ export const create = async (userId, data) => {
   return result.rows[0];
 };
 
-export const findAllByUserId = async (userId) => {
+export const findAllByUserId = async (userId, isActive) => {
+  const filterByStatus = isActive !== undefined;
+
   const result = await query(
     `
     SELECT *
     FROM expense_types
     WHERE user_id=$1
+    ${filterByStatus ? "AND is_active=$2" : ""}
     ORDER BY created_at DESC;
     `,
-    [userId]
+    filterByStatus ? [userId, isActive] : [userId]
   );
 
   return result.rows;
@@ -55,6 +58,8 @@ export const findById = async (id, userId) => {
   return result.rows[0];
 };
 
+// `total` is deliberately absent from the SET list: an expense type's
+// total is frozen once created, because expense_records snapshot it.
 export const update = async (id, userId, data) => {
   const result = await query(
     `
@@ -62,7 +67,6 @@ export const update = async (id, userId, data) => {
     SET
       name=$3,
       categories=$4,
-      total=$5,
       updated_at=NOW()
     WHERE id=$1
       AND user_id=$2
@@ -73,22 +77,24 @@ export const update = async (id, userId, data) => {
       userId,
       data.name,
       JSON.stringify(data.categories),
-      data.total,
     ]
   );
 
   return result.rows[0];
 };
 
-export const remove = async (id, userId) => {
+export const updateStatus = async (id, userId, isActive) => {
   const result = await query(
     `
-    DELETE FROM expense_types
+    UPDATE expense_types
+    SET
+      is_active=$3,
+      updated_at=NOW()
     WHERE id=$1
-    AND user_id=$2
+      AND user_id=$2
     RETURNING *;
     `,
-    [id, userId]
+    [id, userId, isActive]
   );
 
   return result.rows[0];

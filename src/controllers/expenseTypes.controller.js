@@ -6,7 +6,7 @@ import {
   getAllExpenseTypes,
   getExpenseTypeById,
   updateExpenseType,
-  deleteExpenseType,
+  setExpenseTypeStatus,
 } from "../services/expenseTypes.service.js";
 
 export const create = asyncHandler(async (req, res) => {
@@ -18,7 +18,10 @@ export const create = asyncHandler(async (req, res) => {
 });
 
 export const getAll = asyncHandler(async (req, res) => {
-  const expenseTypes = await getAllExpenseTypes(req.user.id);
+  const expenseTypes = await getAllExpenseTypes(
+    req.user.id,
+    req.query.status ?? "all"
+  );
 
   res.json(
     new ApiResponse(200, "Expense types fetched successfully", expenseTypes)
@@ -48,10 +51,18 @@ export const update = asyncHandler(async (req, res) => {
   );
 });
 
-export const remove = asyncHandler(async (req, res) => {
-  await deleteExpenseType(req.params.id, req.user.id);
+export const updateStatus = asyncHandler(async (req, res) => {
+  const expenseType = await setExpenseTypeStatus(
+    req.params.id,
+    req.user.id,
+    req.body.is_active
+  );
 
   res.json(
-    new ApiResponse(200, "Expense type deleted successfully")
+    new ApiResponse(
+      200,
+      `Expense type ${req.body.is_active ? "activated" : "deactivated"} successfully`,
+      expenseType
+    )
   );
 });

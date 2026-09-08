@@ -64,4 +64,25 @@ describe("POST /api/expense-records", () => {
     expect(response.status).toBe(404);
     expect(response.body.success).toBe(false);
   });
+
+  it("should reject an inactive expense type", async () => {
+    const { token } = await login();
+    const { expenseType } = await createExpenseType(token);
+
+    await api()
+      .patch(`/api/expense-types/${expenseType.id}/status`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ is_active: false });
+
+    const response = await api()
+      .post("/api/expense-records")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        expense_type_id: expenseType.id,
+        date: "2026-07-15",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Expense type is inactive");
+  });
 });

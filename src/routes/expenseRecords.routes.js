@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
+import validateQuery from "../middlewares/validateQuery.middleware.js";
 
 import {
     create,
@@ -12,7 +13,8 @@ import {
 } from "../controllers/expenseRecords.controller.js";
 
 import {
-    createExpenseRecordSchema
+    createExpenseRecordSchema,
+    listExpenseRecordsQuerySchema
 } from "../validations/expenseRecords.validation.js";
 
 const router = Router();
@@ -25,7 +27,11 @@ router.post(
     create
 );
 
-router.get("/",getAll);
+router.get(
+    "/",
+    validateQuery(listExpenseRecordsQuerySchema),
+    getAll
+);
 
 router.get("/:id",getById);
 

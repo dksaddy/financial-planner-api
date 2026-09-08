@@ -8,10 +8,14 @@ import {
   getAll,
   getById,
   update,
-  remove,
+  updateStatus,
 } from "../controllers/expenseTypes.controller.js";
 
-import { createExpenseTypeSchema } from "../validations/expenseTypes.validation.js";
+import {
+  createExpenseTypeSchema,
+  updateExpenseTypeSchema,
+  updateExpenseTypeStatusSchema,
+} from "../validations/expenseTypes.validation.js";
 
 const router = Router();
 
@@ -23,8 +27,12 @@ router.get("/", getAll);
 
 router.get("/:id", getById);
 
-router.put("/:id", validate(createExpenseTypeSchema), update);
+router.put("/:id", validate(updateExpenseTypeSchema), update);
 
-router.delete("/:id", remove);
+router.patch(
+  "/:id/status",
+  validate(updateExpenseTypeStatusSchema),
+  updateStatus
+);
 
 export default router;

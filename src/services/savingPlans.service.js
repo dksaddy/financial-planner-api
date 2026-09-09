@@ -31,6 +31,16 @@ export const updateSavingPlan = async (id, userId, data) => {
   return await repository.update(id, userId, data);
 };
 
+export const setSavingPlanStatus = async (id, userId, status) => {
+  const plan = await repository.updateStatus(id, userId, status);
+
+  if (!plan) {
+    throw new AppError("Saving plan not found", HTTP_STATUS.NOT_FOUND);
+  }
+
+  return plan;
+};
+
 export const depositToSavingPlan = async (id, userId, amount) => {
   const existing = await repository.findById(id, userId);
 

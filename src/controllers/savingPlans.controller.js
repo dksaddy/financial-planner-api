@@ -6,6 +6,7 @@ import {
   getAllSavingPlans,
   getSavingPlanById,
   updateSavingPlan,
+  setSavingPlanStatus,
   depositToSavingPlan,
   deleteSavingPlan,
 } from "../services/savingPlans.service.js";
@@ -63,6 +64,22 @@ export const update = asyncHandler(async (req, res) => {
     new ApiResponse(
       200,
       "Saving plan updated successfully",
+      plan
+    )
+  );
+});
+
+export const updateStatus = asyncHandler(async (req, res) => {
+  const plan = await setSavingPlanStatus(
+    req.params.id,
+    req.user.id,
+    req.body.status
+  );
+
+  return res.status(HTTP_STATUS.OK).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      `Saving plan marked ${req.body.status}`,
       plan
     )
   );

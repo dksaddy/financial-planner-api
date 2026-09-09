@@ -56,10 +56,15 @@ export const loginUser = async ({ email, password }) => {
 
   return {
     token,
+    // The client caches this user in a cookie and renders from it until the
+    // profile is fetched, so it carries the display fields too — otherwise an
+    // avatar only appears after a visit to the profile page.
     user: {
       id: user.id,
       name: user.name,
       email: user.email,
+      salary: user.salary,
+      avatar_url: user.avatar_url,
     },
   };
 };

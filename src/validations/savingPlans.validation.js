@@ -31,3 +31,10 @@ export const createSavingPlanSchema = z.object({
 export const depositSavingPlanSchema = z.object({
   amount: z.number().positive("Deposit amount must be greater than 0"),
 });
+
+// The three values the saving_plans.status check constraint allows.
+export const updateSavingPlanStatusSchema = z.object({
+  status: z.enum(["active", "completed", "cancelled"], {
+    error: "Status must be active, completed or cancelled",
+  }),
+});

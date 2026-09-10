@@ -8,6 +8,8 @@ import {
   getProfile,
   updateProfile,
   updateAvatar,
+  getAvatars,
+  deleteAvatar,
   updatePassword
 } from "../controllers/user.controller.js";
 
@@ -35,6 +37,16 @@ router.put(
   "/avatar",
   upload.single("avatar"),
   updateAvatar
+);
+
+router.get(
+  "/avatars",
+  getAvatars
+);
+
+router.delete(
+  "/avatars/:fileName",
+  deleteAvatar
 );
 
 router.put(

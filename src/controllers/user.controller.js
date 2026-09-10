@@ -53,6 +53,33 @@ export const updateProfile =
 });
 
 
+export const getAvatars = asyncHandler(async (req, res) => {
+  const avatars = await userService.listAvatars(req.user.id);
+
+  return res.status(HTTP_STATUS.OK).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      "Avatars fetched successfully",
+      avatars
+    )
+  );
+});
+
+export const deleteAvatar = asyncHandler(async (req, res) => {
+  const removed = await userService.deleteAvatar(
+    req.user.id,
+    req.params.fileName
+  );
+
+  return res.status(HTTP_STATUS.OK).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      "Photo deleted successfully",
+      removed
+    )
+  );
+});
+
 export const updatePassword =
   asyncHandler(async (req, res) => {
 

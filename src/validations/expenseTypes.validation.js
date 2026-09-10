@@ -3,11 +3,15 @@ import { z } from "zod";
 const categorySchema = z.object({
   name: z
     .string()
+    .trim()
     .min(1, "Category name is required"),
 
+  // Strictly a number here — the web mirror coerces, because form inputs yield
+  // strings. `positive`, not `nonnegative`: a category worth 0 contributes
+  // nothing to the type's total and only ever arrived from a blank field.
   amount: z
     .number()
-    .nonnegative("Amount cannot be negative"),
+    .positive("Amount must be greater than 0"),
 });
 
 export const createExpenseTypeSchema = z.object({

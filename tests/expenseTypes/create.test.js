@@ -39,6 +39,26 @@ describe("POST /api/expense-types", () => {
     expect(response.body.success).toBe(false);
   });
 
+  it.each([
+    ["zero", 0],
+    ["negative", -5],
+    ["missing", undefined],
+    ["a string", "50"],
+  ])("should reject a category amount that is %s", async (_label, amount) => {
+    const { token } = await login();
+
+    const response = await api()
+      .post("/api/expense-types")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Daily Expense",
+        categories: [{ name: "Transport", amount }],
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+  });
+
   it("should reject invalid request body", async () => {
     const { token } = await login();
 

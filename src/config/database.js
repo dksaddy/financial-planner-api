@@ -50,7 +50,20 @@ export const pool = new Pool({
   // Returned to the pooler sooner than the old 30s, so an idle dev server
   // stops sitting on connections another client could be using.
   idleTimeoutMillis: 10000,
-  connectionTimeoutMillis: 5000,
+
+  // The database is across the internet, not on a local socket: every new
+  // connection is a round trip plus TLS. 5s was close enough to a cold
+  // connect that a slow one failed outright — the request that hit this
+  // died at 5003ms with `Connection terminated due to connection timeout`,
+  // and the very next one succeeded in 928ms. Waiting is better than a 500.
+  connectionTimeoutMillis: 10000,
+
+  // Without this an idle socket can be dropped silently — by the pooler, or
+  // by NAT on the way — and pg only discovers it when a query tries to use
+  // it, surfacing as `Connection terminated unexpectedly`. Keepalive probes
+  // hold the socket open so that stops happening.
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 5000,
 });
 
 pool.on("error", (err) => {

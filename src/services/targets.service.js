@@ -4,6 +4,7 @@ import { v4 as uuid } from "uuid";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { TARGET_MESSAGES } from "../constants/messages.js";
+import { compressImage } from "../utils/image.js";
 
 export const createTarget = async (
   userId,
@@ -14,13 +15,17 @@ export const createTarget = async (
   let image_url = null;
 
   if (file) {
-    const extension = file.originalname.split(".").pop();
-    const fileName = `${userId}/targets/${uuid()}.${extension}`;
+    // Shrunk before it is stored, never at its uploaded size. The extension
+    // comes from the compressor rather than the original name, because the
+    // output is always WebP whatever went in.
+    const image = await compressImage(file);
+
+    const fileName = `${userId}/targets/${uuid()}.${image.extension}`;
 
     const { error } = await supabase.storage
       .from(process.env.SUPABASE_BUCKET)
-      .upload(fileName, file.buffer, {
-        contentType: file.mimetype,
+      .upload(fileName, image.buffer, {
+        contentType: image.contentType,
         upsert: true,
       });
 

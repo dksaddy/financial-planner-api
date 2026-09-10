@@ -107,6 +107,14 @@ between: `repository.removeIfUnused` puts the delete and the `NOT EXISTS` guard 
 instead. It returning no row is ambiguous by design — the service calls `findById` first so it can
 answer 404 for "not yours / not there" and 409 for "still in use".
 
+**Uploads** — `upload.middleware.js` accepts JPG/PNG/WEBP/GIF up to 5MB into memory, and
+`utils/image.js` `compressImage()` shrinks a file before it reaches Supabase: capped at 1024px on the
+long edge and re-encoded as WebP q70, which puts a phone photo under 100KB. It returns the extension
+and content type to store under, so callers must use those rather than the original filename's — the
+output is WebP whatever went in. A re-encode that comes out no smaller than the source is discarded and
+the original stored instead, so compressing can never cost space. Currently wired into
+`targets.service.js` only; `user.service.js` avatars still upload at full size.
+
 **Dates** — `pg` returns `date` columns as JS `Date`, while validated request bodies carry
 `"YYYY-MM-DD"` strings. Always normalize with `toDateString()` from `src/utils/date.js` before comparing
 or keying by a date; mismatches here are silent.

@@ -88,9 +88,21 @@ both the create and update paths. Tests must not reuse a date — `nextExpenseDa
 **Expense types** — an expense type's `total` is frozen after creation, because `expense_records`
 snapshot it at creation time; `PUT /expense-types/:id` recomputes the total from the submitted
 categories and rejects the update with a 400 unless it still equals the stored total (compared as
-integer cents). Types are never deleted — `PATCH /expense-types/:id/status` flips `is_active`, and
-`expenseRecords.service.js` refuses to create or re-point a record onto an inactive type. `GET
-/expense-types` returns everything unless `?status=active|inactive` narrows it.
+integer cents). `PATCH /expense-types/:id/status` flips `is_active`, and `expenseRecords.service.js`
+refuses to create or re-point a record onto an inactive type. `GET /expense-types` returns everything
+unless `?status=active|inactive` narrows it.
+
+Every expense type read carries a derived **`is_used`** boolean (an `EXISTS` against `expense_records`,
+added by `expenseTypes.repository.js` to both `findAllByUserId` and `findById`) so the client can hide
+a delete control it knows would be refused. It is not a column — do not try to write it.
+
+`DELETE /expense-types/:id` succeeds **only while no expense record references the type** — once one
+does it answers 409 and deactivating is the only route. The 409 stays reachable even with `is_used`
+shipped, because the flag goes stale the moment another tab adds a record. `expense_records.expense_type_id` is
+`ON DELETE CASCADE`, so a check-then-delete would destroy records for real if one were created in
+between: `repository.removeIfUnused` puts the delete and the `NOT EXISTS` guard in one statement
+instead. It returning no row is ambiguous by design — the service calls `findById` first so it can
+answer 404 for "not yours / not there" and 409 for "still in use".
 
 **Dates** — `pg` returns `date` columns as JS `Date`, while validated request bodies carry
 `"YYYY-MM-DD"` strings. Always normalize with `toDateString()` from `src/utils/date.js` before comparing

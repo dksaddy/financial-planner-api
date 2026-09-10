@@ -6,6 +6,7 @@ import {
   getAllExpenseTypes,
   getExpenseTypeById,
   updateExpenseType,
+  deleteExpenseType,
   setExpenseTypeStatus,
 } from "../services/expenseTypes.service.js";
 
@@ -64,5 +65,16 @@ export const updateStatus = asyncHandler(async (req, res) => {
       `Expense type ${req.body.is_active ? "activated" : "deactivated"} successfully`,
       expenseType
     )
+  );
+});
+
+export const remove = asyncHandler(async (req, res) => {
+  const expenseType = await deleteExpenseType(
+    req.params.id,
+    req.user.id
+  );
+
+  res.json(
+    new ApiResponse(200, "Expense type deleted successfully", expenseType)
   );
 });

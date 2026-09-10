@@ -61,6 +61,30 @@ export const updateExpenseType = async (id, userId, data) => {
   return await repository.update(id, userId, data);
 };
 
+// Deletable only while nothing points at it. Once a record exists the type is
+// part of that record's history — and the foreign key would cascade the
+// records away with it — so deactivating is the only option from then on.
+export const deleteExpenseType = async (id, userId) => {
+  const existing = await repository.findById(id, userId);
+
+  if (!existing) {
+    throw new AppError("Expense type not found", HTTP_STATUS.NOT_FOUND);
+  }
+
+  const deleted = await repository.removeIfUnused(id, userId);
+
+  // The row exists and belongs to this user, so the only reason the guarded
+  // delete matched nothing is that an expense record still references it.
+  if (!deleted) {
+    throw new AppError(
+      "This expense type is used by existing expense records. Deactivate it instead.",
+      HTTP_STATUS.CONFLICT
+    );
+  }
+
+  return deleted;
+};
+
 export const setExpenseTypeStatus = async (id, userId, isActive) => {
   const expenseType = await repository.updateStatus(id, userId, isActive);
 

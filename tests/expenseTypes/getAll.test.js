@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { api } from "../helpers/request.helper.js";
 import { login } from "../helpers/auth.helper.js";
 import { createExpenseType } from "../helpers/expenseType.helper.js";
+import { nextExpenseDate } from "../helpers/expenseRecord.helper.js";
 
 describe("GET /api/expense-types", () => {
   it("should return all expense types", async () => {
@@ -92,6 +93,34 @@ describe("GET /api/expense-types", () => {
     );
     expect(
       response.body.data.every((type) => type.is_active === false)
+    ).toBe(true);
+  });
+
+  it("should flag whether each type is used by an expense record", async () => {
+    const { token, expenseType } = await createExpenseType();
+
+    const before = await api()
+      .get("/api/expense-types")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(
+      before.body.data.find((type) => type.id === expenseType.id).is_used
+    ).toBe(false);
+
+    await api()
+      .post("/api/expense-records")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        expense_type_id: expenseType.id,
+        date: nextExpenseDate(),
+      });
+
+    const after = await api()
+      .get("/api/expense-types")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(
+      after.body.data.find((type) => type.id === expenseType.id).is_used
     ).toBe(true);
   });
 

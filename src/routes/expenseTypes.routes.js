@@ -8,6 +8,7 @@ import {
   getAll,
   getById,
   update,
+  remove,
   updateStatus,
 } from "../controllers/expenseTypes.controller.js";
 
@@ -28,6 +29,8 @@ router.get("/", getAll);
 router.get("/:id", getById);
 
 router.put("/:id", validate(updateExpenseTypeSchema), update);
+
+router.delete("/:id", remove);
 
 router.patch(
   "/:id/status",

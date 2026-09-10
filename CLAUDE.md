@@ -73,6 +73,18 @@ after every create/update/delete (and for update, for the old date too when the 
 path that touches expense records must do the same or the dashboard figures go stale. Total extra save =
 sum of daily rows minus completed targets' amounts.
 
+A day left with **no** expense records has its row deleted rather than recalculated — that is why
+`summarizeDay` returns a count alongside the sum. Upserting instead would bank a whole day's budget as
+extra saving for a day with nothing recorded on it, which is what deleting the last record of a day
+used to do. A day whose records genuinely total 0 still keeps its row, hence count rather than sum.
+
+**One expense record per day** — `expense_records` carries unique `(user_id, date)`, matching the
+constraint `daily_extra_savings` has had since migration 007, so a day and its derived row are
+one-to-one. Postgres reports a clash as `23505`, which is not an `AppError` and would otherwise reach
+the client as a generic 500; `asDateTakenError` in `expenseRecords.service.js` translates it to a 409 on
+both the create and update paths. Tests must not reuse a date — `nextExpenseDate()` in
+`tests/helpers/expenseRecord.helper.js` hands out a fresh day outside the seeded range.
+
 **Expense types** — an expense type's `total` is frozen after creation, because `expense_records`
 snapshot it at creation time; `PUT /expense-types/:id` recomputes the total from the submitted
 categories and rejects the update with a 400 unless it still equals the stored total (compared as

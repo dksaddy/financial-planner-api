@@ -32,6 +32,21 @@ export const upsertForDate = async (
   return result.rows[0];
 };
 
+export const removeForDate = async (userId, date) => {
+  const result = await query(
+    `
+    DELETE FROM daily_extra_savings
+    WHERE
+        user_id=$1
+        AND date=$2
+    RETURNING *;
+    `,
+    [userId, date]
+  );
+
+  return result.rows[0] ?? null;
+};
+
 export const getTotalExtraSave = async (userId) => {
   const result = await query(
     `

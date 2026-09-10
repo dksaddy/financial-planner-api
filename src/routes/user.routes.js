@@ -9,12 +9,14 @@ import {
   updateProfile,
   updateAvatar,
   getAvatars,
+  selectAvatar,
   deleteAvatar,
   updatePassword
 } from "../controllers/user.controller.js";
 
 import {
   updateProfileSchema,
+  selectAvatarSchema,
   changePasswordSchema
 } from "../validations/user.validation.js";
 
@@ -42,6 +44,12 @@ router.put(
 router.get(
   "/avatars",
   getAvatars
+);
+
+router.put(
+  "/avatar/select",
+  validate(selectAvatarSchema),
+  selectAvatar
 );
 
 router.delete(

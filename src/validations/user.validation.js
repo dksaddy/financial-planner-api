@@ -31,6 +31,22 @@ export const updateProfileSchema = z
   );
 
 
+// Only a bare file name — the service prefixes the user's folder itself, so a
+// name that could climb out of it is refused here before it reaches storage.
+export const selectAvatarSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Photo is required.")
+    .refine(
+      (value) =>
+        !value.includes("/") &&
+        !value.includes("\\") &&
+        !value.includes(".."),
+      { message: "Invalid photo." }
+    ),
+});
+
 export const changePasswordSchema = z.object({
   oldPassword: z
     .string()

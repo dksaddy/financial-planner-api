@@ -185,10 +185,14 @@ export const remove = async (id, userId) => {
   return result.rows[0];
 };
 
-export const sumTotalByDate = async (userId, date) => {
+// Returns the count alongside the sum because the two mean different things
+// to the caller: a day with no records at all must drop its extra-saving row,
+// while a day whose records happen to total 0 must keep one.
+export const summarizeDay = async (userId, date) => {
   const result = await query(
     `
     SELECT
+        COUNT(*) AS count,
         COALESCE(SUM(total), 0) AS total
     FROM expense_records
     WHERE
@@ -198,5 +202,8 @@ export const sumTotalByDate = async (userId, date) => {
     [userId, date]
   );
 
-  return Number(result.rows[0].total);
+  return {
+    count: Number(result.rows[0].count),
+    total: Number(result.rows[0].total),
+  };
 };

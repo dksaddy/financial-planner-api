@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { api } from "../helpers/request.helper.js";
 import { login } from "../helpers/auth.helper.js";
 import { createExpenseType } from "../helpers/expenseType.helper.js";
+import { nextExpenseDate } from "../helpers/expenseRecord.helper.js";
 
 describe("POST /api/expense-records", () => {
   it("should create an expense record", async () => {
@@ -13,7 +14,7 @@ describe("POST /api/expense-records", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         expense_type_id: expenseType.id,
-        date: "2026-07-15",
+        date: nextExpenseDate(),
       });
 
     expect(response.status).toBe(201);
@@ -21,6 +22,29 @@ describe("POST /api/expense-records", () => {
 
     expect(response.body.data).toHaveProperty("id");
     expect(response.body.data.expense_type_id).toBe(expenseType.id);
+  });
+
+  it("should reject a second record on the same date", async () => {
+    const { token } = await login();
+    const { expenseType } = await createExpenseType(token);
+    const date = nextExpenseDate();
+
+    const first = await api()
+      .post("/api/expense-records")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ expense_type_id: expenseType.id, date });
+
+    expect(first.status).toBe(201);
+
+    const second = await api()
+      .post("/api/expense-records")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ expense_type_id: expenseType.id, date });
+
+    expect(second.status).toBe(409);
+    expect(second.body.message).toBe(
+      "An expense record already exists for that date."
+    );
   });
 
   it("should reject unauthenticated request", async () => {

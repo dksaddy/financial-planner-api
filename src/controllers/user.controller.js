@@ -65,6 +65,21 @@ export const getAvatars = asyncHandler(async (req, res) => {
   );
 });
 
+export const selectAvatar = asyncHandler(async (req, res) => {
+  const user = await userService.selectAvatar(
+    req.user.id,
+    req.body.name
+  );
+
+  return res.status(HTTP_STATUS.OK).json(
+    new ApiResponse(
+      HTTP_STATUS.OK,
+      "Profile photo updated successfully",
+      user
+    )
+  );
+});
+
 export const deleteAvatar = asyncHandler(async (req, res) => {
   const removed = await userService.deleteAvatar(
     req.user.id,

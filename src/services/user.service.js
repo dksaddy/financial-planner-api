@@ -131,6 +131,27 @@ export const listAvatars = async (userId) => {
     });
 };
 
+export const selectAvatar = async (userId, fileName) => {
+  const path = resolveAvatarPath(userId, fileName);
+
+  // Confirmed against the folder listing rather than trusted: a public URL can
+  // be built for any name at all, so without this a deleted — or never
+  // uploaded — file could be written to `avatar_url` as a broken image.
+  const album = await listAvatars(userId);
+
+  if (!album.some((photo) => photo.name === fileName.trim())) {
+    throw new AppError(
+      "Image not found.",
+      HTTP_STATUS.NOT_FOUND
+    );
+  }
+
+  return await userRepository.updateAvatar(
+    userId,
+    buildPublicUrl(path)
+  );
+};
+
 export const deleteAvatar = async (userId, fileName) => {
   const path = resolveAvatarPath(userId, fileName);
 

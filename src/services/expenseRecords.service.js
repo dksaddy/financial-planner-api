@@ -14,6 +14,20 @@ import { HTTP_STATUS } from "../constants/httpStatus.js";
 const withNormalizedDate = (record) =>
   record ? { ...record, date: toDateString(record.date) } : record;
 
+// expense_records carries unique (user_id, date) — one record per day. Postgres
+// reports the clash as 23505, which the error middleware would otherwise turn
+// into a generic 500 because it is not an AppError.
+const asDateTakenError = (error) => {
+  if (error?.code === "23505") {
+    return new AppError(
+      "An expense record already exists for that date.",
+      HTTP_STATUS.CONFLICT
+    );
+  }
+
+  return error;
+};
+
 // Expense types are deactivated instead of deleted, and a deactivated
 // type must not back any new or re-pointed record.
 const loadActiveExpenseType = async (expenseTypeId, userId) => {
@@ -45,11 +59,17 @@ export const createExpenseRecord = async (userId, data) => {
     userId
   );
 
-  const record = await repository.create(userId, {
-    expense_type_id: data.expense_type_id,
-    date: data.date,
-    total: expenseType.total,
-  });
+  let record;
+
+  try {
+    record = await repository.create(userId, {
+      expense_type_id: data.expense_type_id,
+      date: data.date,
+      total: expenseType.total,
+    });
+  } catch (error) {
+    throw asDateTakenError(error);
+  }
 
   await extraSavingsService.recalculateDayExtraSaving(
     userId,
@@ -135,15 +155,21 @@ export const updateExpenseRecord = async (
     userId
   );
 
-  const record = await repository.update(
-    id,
-    userId,
-    {
-      expense_type_id: data.expense_type_id,
-      date: data.date,
-      total: expenseType.total,
-    }
-  );
+  let record;
+
+  try {
+    record = await repository.update(
+      id,
+      userId,
+      {
+        expense_type_id: data.expense_type_id,
+        date: data.date,
+        total: expenseType.total,
+      }
+    );
+  } catch (error) {
+    throw asDateTakenError(error);
+  }
 
   if (!record) {
     throw new AppError(

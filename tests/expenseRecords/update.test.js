@@ -4,7 +4,10 @@ import {
   login,
   loginSecondUser,
 } from "../helpers/auth.helper.js";
-import { createExpenseRecord } from "../helpers/expenseRecord.helper.js";
+import {
+  createExpenseRecord,
+  nextExpenseDate,
+} from "../helpers/expenseRecord.helper.js";
 import { createExpenseType } from "../helpers/expenseType.helper.js";
 
 describe("PUT /api/expense-records/:id", () => {
@@ -20,7 +23,10 @@ describe("PUT /api/expense-records/:id", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         expense_type_id: expenseType.id,
-        date: "2026-08-01",
+        // A free day: this is the only test here that actually reaches the
+        // update, and unique (user_id, date) would reject a repeat of it on a
+        // second run against the same database.
+        date: nextExpenseDate(),
       });
 
     expect(response.status).toBe(200);

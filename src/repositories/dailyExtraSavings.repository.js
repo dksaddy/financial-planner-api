@@ -47,6 +47,59 @@ export const removeForDate = async (userId, date) => {
   return result.rows[0] ?? null;
 };
 
+export const findByDates = async (userId, dates) => {
+  if (!dates.length) return [];
+
+  const result = await query(
+    `
+    SELECT *
+    FROM daily_extra_savings
+    WHERE
+        user_id=$1
+        AND date = ANY($2::date[]);
+    `,
+    [userId, dates]
+  );
+
+  return result.rows;
+};
+
+// Sums the stored daily figures over the same window the expense list is
+// filtered by. Deliberately not the dashboard's Extra Save: that one also
+// subtracts what completed targets have spent, which is a whole-account
+// figure and has no place in a per-month expense summary.
+export const sumExtraAmount = async (userId, month) => {
+  const params = [userId];
+
+  let filter = "";
+
+  if (month) {
+    const [year, monthNumber] = month.split("-").map(Number);
+
+    const start = new Date(Date.UTC(year, monthNumber - 1, 1));
+    const end = new Date(Date.UTC(year, monthNumber, 1));
+
+    params.push(
+      start.toISOString().slice(0, 10),
+      end.toISOString().slice(0, 10)
+    );
+
+    filter = `AND date >= $${params.length - 1} AND date < $${params.length}`;
+  }
+
+  const result = await query(
+    `
+    SELECT COALESCE(SUM(extra_amount), 0)::numeric(12,2) AS total
+    FROM daily_extra_savings
+    WHERE user_id=$1
+    ${filter};
+    `,
+    params
+  );
+
+  return result.rows[0].total;
+};
+
 export const getTotalExtraSave = async (userId) => {
   const result = await query(
     `

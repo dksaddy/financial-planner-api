@@ -1,5 +1,6 @@
 import * as repository from "../repositories/expenseRecords.repository.js";
 import * as expenseTypeRepository from "../repositories/expenseTypes.repository.js";
+import * as dailyExtraSavingsRepository from "../repositories/dailyExtraSavings.repository.js";
 import * as extraSavingsService from "./extraSavings.service.js";
 import { toDateString } from "../utils/date.js";
 
@@ -86,9 +87,10 @@ export const getAllExpenseRecords = async (
   userId,
   { page = 1, limit = 10, month } = {}
 ) => {
-  const [summary, months] = await Promise.all([
+  const [summary, months, totalExtraSave] = await Promise.all([
     repository.summarizeByUserId(userId, { month }),
     repository.findMonthsByUserId(userId),
+    dailyExtraSavingsRepository.sumExtraAmount(userId, month),
   ]);
 
   const total = Number(summary.total);
@@ -106,8 +108,32 @@ export const getAllExpenseRecords = async (
     month,
   });
 
+  const normalized = records.map(withNormalizedDate);
+
+  // The stored figure for each day on this page, keyed by date. It is read
+  // rather than derived because it counts the whole day — a day's records can
+  // straddle two pages, and the budget side of the sum is not in this response
+  // at all. Days with no row (nothing recorded, so nothing saved) are simply
+  // absent, and the client renders them as blank rather than as zero.
+  const dates = [...new Set(normalized.map((record) => record.date))];
+
+  const extraSavingRows =
+    await dailyExtraSavingsRepository.findByDates(userId, dates);
+
+  const extraSavings = Object.fromEntries(
+    extraSavingRows.map((row) => [
+      toDateString(row.date),
+      {
+        budget_amount: row.budget_amount,
+        spent_amount: row.spent_amount,
+        extra_amount: row.extra_amount,
+      },
+    ])
+  );
+
   return {
-    records: records.map(withNormalizedDate),
+    records: normalized,
+    extraSavings,
     pagination: {
       page: currentPage,
       limit,
@@ -118,6 +144,9 @@ export const getAllExpenseRecords = async (
     },
     summary: {
       total_amount: summary.total_amount,
+      // Saved across the same filter as total_amount. Can be negative — an
+      // overspent month really is a loss against budget.
+      total_extra_save: totalExtraSave,
     },
     months,
   };

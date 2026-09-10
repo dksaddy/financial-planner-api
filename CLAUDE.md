@@ -51,8 +51,11 @@ Pagination: `GET /expense-records` is the reference implementation. Query string
 `validateQuery(schema)`, which writes the coerced values to **`req.validatedQuery`** — Express 5's
 `req.query` is a getter with no setter, so it cannot be replaced in place. `data` stays a plain array
 and everything describing the full result set goes in `ApiResponse`'s optional fourth argument, `meta`
-(`{ pagination, summary, months }`); `meta` is omitted from the JSON entirely when not passed, so other
-endpoints keep their exact shape. Paged list queries must carry a tiebreaker in the `ORDER BY`
+(`{ pagination, summary, months, extraSavings }`); `meta` is omitted from the JSON entirely when not
+passed, so other endpoints keep their exact shape. `extraSavings` maps `"YYYY-MM-DD"` to that day's
+stored `daily_extra_savings` row for the days on the current page — read, never derived from the rows,
+because it weighs the day's whole spend against a budget the response does not carry. A day with no
+row is absent from the map rather than present as zero. Paged list queries must carry a tiebreaker in the `ORDER BY`
 (`date DESC, created_at DESC, id DESC`) or rows shift between pages, and the service clamps a page past
 the end to the last page rather than returning an empty list.
 

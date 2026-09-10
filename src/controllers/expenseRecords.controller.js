@@ -46,6 +46,7 @@ export const getAll = asyncHandler(async(req,res)=>{
                 pagination: result.pagination,
                 summary: result.summary,
                 months: result.months,
+                extraSavings: result.extraSavings,
             }
         )
     );

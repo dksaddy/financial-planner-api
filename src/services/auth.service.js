@@ -24,7 +24,30 @@ export const registerUser = async ({ name, email, password }) => {
     password: hashedPassword,
   });
 
-  return user;
+  // Signed in straight away: the response carries the same session a login
+  // would, so the client never has to ask for the password twice.
+  return createSession(user);
+};
+
+const createSession = (user) => {
+  const token = generateToken({
+    id: user.id,
+    email: user.email,
+  });
+
+  return {
+    token,
+    // The client caches this user in a cookie and renders from it until the
+    // profile is fetched, so it carries the display fields too — otherwise an
+    // avatar only appears after a visit to the profile page.
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      salary: user.salary,
+      avatar_url: user.avatar_url,
+    },
+  };
 };
 
 export const loginUser = async ({ email, password }) => {
@@ -49,24 +72,7 @@ export const loginUser = async ({ email, password }) => {
     );
   }
 
-  const token = generateToken({
-    id: user.id,
-    email: user.email,
-  });
-
-  return {
-    token,
-    // The client caches this user in a cookie and renders from it until the
-    // profile is fetched, so it carries the display fields too — otherwise an
-    // avatar only appears after a visit to the profile page.
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      salary: user.salary,
-      avatar_url: user.avatar_url,
-    },
-  };
+  return createSession(user);
 };
 
 export const getCurrentUser = async (userId) => {

@@ -113,8 +113,10 @@ only while `currently_deposited < deposit_amount`, only completed can become wit
 final. Deposits are capped at `deposit_amount`: the service answers 400 with the remaining figure, and
 `repository.addDeposit` repeats the status and cap guards inside its `UPDATE`, completing the plan in
 the same statement when a deposit fills it — so racing deposits cannot overfill. The web mirrors the
-transitions in `src/lib/savingPlan.js` `canChangeStatus`. Every dashboard figure and list counts
-active plans only.
+transitions in `src/lib/savingPlan.js` `canChangeStatus`. On the dashboard, the Saving Summary
+totals (deposit, withdrawal, profit) count active and completed plans and leave out withdrawn;
+everything else — the weekly/monthly saving that feeds `calculateBudget` (Spending, Progress, Saving
+Breakdown, stored daily budgets) and the Overview and Savings plan lists — counts active plans only.
 
 **Uploads** — `upload.middleware.js` accepts JPG/PNG/WEBP/GIF up to 5MB into memory, and
 `utils/image.js` `compressImage()` shrinks a file before it reaches Supabase: capped at 1024px on the

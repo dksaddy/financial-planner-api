@@ -5,22 +5,27 @@ export const getDashboardSummary = async (userId) => {
     SELECT
       u.salary,
 
-      -- Every dashboard figure counts ACTIVE plans only. Completed and
-      -- withdrawn plans are finished and live on the saving plans page.
+      -- Summary totals count active and completed plans. Withdrawn plans
+      -- are paid out and finished, so they live only on the saving plans
+      -- page.
       COALESCE(
         SUM(
-          CASE WHEN sp.status = 'active' THEN sp.deposit_amount ELSE 0 END
+          CASE WHEN sp.status <> 'withdrawn' THEN sp.deposit_amount ELSE 0 END
         ),
         0
       ) AS total_deposit,
 
       COALESCE(
         SUM(
-          CASE WHEN sp.status = 'active' THEN sp.withdrawal_amount ELSE 0 END
+          CASE WHEN sp.status <> 'withdrawn' THEN sp.withdrawal_amount ELSE 0 END
         ),
         0
       ) AS total_withdrawal,
 
+      -- Recurring weekly/monthly saving is money still being put aside, so
+      -- only ACTIVE plans count. It feeds calculateBudget, which drives the
+      -- Spending, Progress and Saving Breakdown cards and each day's stored
+      -- budget.
       COALESCE(
         SUM(
           CASE
@@ -71,6 +76,8 @@ export const getSavingPlans = async (userId) => {
       created_at
     FROM saving_plans
     WHERE user_id = $1
+      -- Only active plans are listed; completed ones still count in the
+      -- summary figures above but no longer take deposits.
       AND status = 'active'
     ORDER BY created_at DESC;
   `;

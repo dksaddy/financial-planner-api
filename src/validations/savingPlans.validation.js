@@ -32,9 +32,10 @@ export const depositSavingPlanSchema = z.object({
   amount: z.number().positive("Deposit amount must be greater than 0"),
 });
 
-// The three values the saving_plans.status check constraint allows.
+// The three values the saving_plans.status check constraint allows. Which
+// moves between them are legal is a service rule, not a schema one.
 export const updateSavingPlanStatusSchema = z.object({
-  status: z.enum(["active", "completed", "cancelled"], {
-    error: "Status must be active, completed or cancelled",
+  status: z.enum(["active", "completed", "withdrawn"], {
+    error: "Status must be active, completed or withdrawn",
   }),
 });

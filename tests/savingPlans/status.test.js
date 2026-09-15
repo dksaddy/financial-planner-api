@@ -29,13 +29,13 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     expect(check.body.data.status).toBe("completed");
   });
 
-  it("should reopen a cancelled plan", async () => {
+  it("should reopen a completed plan that is not fully deposited", async () => {
     const { token, plan } = await createSavingPlan();
 
     await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "cancelled" });
+      .send({ status: "completed" });
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
@@ -46,15 +46,71 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     expect(response.body.data.status).toBe("active");
   });
 
-  it("should reject a status outside the allowed set", async () => {
+  it("should withdraw a completed plan", async () => {
+    const { token, plan } = await createSavingPlan();
+
+    await api()
+      .patch(`/api/saving-plans/${plan.id}/status`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ status: "completed" });
+
+    const response = await api()
+      .patch(`/api/saving-plans/${plan.id}/status`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ status: "withdrawn" });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.status).toBe("withdrawn");
+  });
+
+  it("should refuse to withdraw an active plan", async () => {
     const { token, plan } = await createSavingPlan();
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "paused" });
+      .send({ status: "withdrawn" });
 
     expect(response.status).toBe(400);
+
+    const check = await api()
+      .get(`/api/saving-plans/${plan.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(check.body.data.status).toBe("active");
+  });
+
+  it("should keep a withdrawn plan withdrawn", async () => {
+    const { token, plan } = await createSavingPlan();
+
+    for (const status of ["completed", "withdrawn"]) {
+      await api()
+        .patch(`/api/saving-plans/${plan.id}/status`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({ status });
+    }
+
+    for (const status of ["active", "completed"]) {
+      const response = await api()
+        .patch(`/api/saving-plans/${plan.id}/status`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({ status });
+
+      expect(response.status).toBe(400);
+    }
+  });
+
+  it("should reject a status outside the allowed set", async () => {
+    const { token, plan } = await createSavingPlan();
+
+    for (const status of ["paused", "cancelled"]) {
+      const response = await api()
+        .patch(`/api/saving-plans/${plan.id}/status`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({ status });
+
+      expect(response.status).toBe(400);
+    }
   });
 
   it("should refuse deposits once a plan is not active", async () => {
@@ -63,7 +119,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "cancelled" });
+      .send({ status: "completed" });
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/deposit`)
@@ -104,7 +160,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "cancelled" });
+      .send({ status: "completed" });
 
     expect(response.status).toBe(404);
   });

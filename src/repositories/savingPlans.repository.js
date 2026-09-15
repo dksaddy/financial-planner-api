@@ -96,18 +96,24 @@ export const update = async (id, userId, data) => {
   return result.rows[0];
 };
 
-export const updateStatus = async (id, userId, status) => {
+export const updateStatus = async (
+  id,
+  userId,
+  fromStatus,
+  toStatus
+) => {
   const result = await query(
     `
     UPDATE saving_plans
     SET
-      status = $3,
+      status = $4,
       updated_at = NOW()
     WHERE id = $1
       AND user_id = $2
+      AND status = $3
     RETURNING *;
     `,
-    [id, userId, status]
+    [id, userId, fromStatus, toStatus]
   );
 
   return result.rows[0];

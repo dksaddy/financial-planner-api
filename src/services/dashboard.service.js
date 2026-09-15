@@ -161,6 +161,10 @@ export const getDashboardData = async (userId) => {
     ),
   ].sort();
 
+  // Keyed by date, carrying the day's stored budget alongside its extra
+  // save. The budget is what the day was weighed against when its row was
+  // written, so a week's cards stay measured against the budget of that
+  // week rather than today's salary settings.
   let lastFourWeeksSavingsByDate = {};
 
   if (lastFourWeeksDates.length > 0) {
@@ -171,9 +175,10 @@ export const getDashboardData = async (userId) => {
     );
 
     rows.forEach((row) => {
-      lastFourWeeksSavingsByDate[toDateString(row.date)] = Number(
-        row.extra_amount
-      );
+      lastFourWeeksSavingsByDate[toDateString(row.date)] = {
+        extraSave: Number(row.extra_amount),
+        budget: Number(row.budget_amount),
+      };
     });
   }
 
@@ -185,15 +190,16 @@ export const getDashboardData = async (userId) => {
   };
 
   lastFourWeeksExpenses.forEach((expense) => {
+    const saving =
+      lastFourWeeksSavingsByDate[toDateString(expense.date)];
+
     const item = {
       id: expense.id,
       date: toDateString(expense.date),
       total: Number(expense.total),
       typeName: expense.type_name,
-      extraSave:
-        lastFourWeeksSavingsByDate[
-          toDateString(expense.date)
-        ] ?? null,
+      extraSave: saving?.extraSave ?? null,
+      budget: saving?.budget ?? null,
     };
 
     switch (Number(expense.week_number)) {

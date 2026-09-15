@@ -37,6 +37,68 @@ describe("PATCH /api/saving-plans/:id/deposit", () => {
     expect(response.body.data.currently_deposited).toBe("250.00");
   });
 
+  it("should reject a deposit above the remaining amount", async () => {
+    const { token, plan } = await createSavingPlan();
+
+    await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ amount: 300 });
+
+    const response = await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ amount: 200.01 });
+
+    expect(response.status).toBe(400);
+
+    expect(response.body.message).toBe(
+      "Deposit exceeds the remaining 200.00"
+    );
+
+    const check = await api()
+      .get(`/api/saving-plans/${plan.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(check.body.data.currently_deposited).toBe("300.00");
+  });
+
+  it("should complete the plan when a deposit fills it", async () => {
+    const { token, plan } = await createSavingPlan();
+
+    await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ amount: 300 });
+
+    const response = await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ amount: 200 });
+
+    expect(response.status).toBe(200);
+
+    expect(response.body.data.currently_deposited).toBe("500.00");
+
+    expect(response.body.data.status).toBe("completed");
+  });
+
+  it("should refuse any deposit once the plan is full", async () => {
+    const { token, plan } = await createSavingPlan();
+
+    await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ amount: 500 });
+
+    const response = await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ amount: 1 });
+
+    expect(response.status).toBe(400);
+  });
+
   it("should reject unauthenticated request", async () => {
     const { plan } = await createSavingPlan();
 

@@ -109,7 +109,31 @@ export const depositToSavingPlan = async (id, userId, amount) => {
     );
   }
 
-  return await repository.addDeposit(id, userId, amount);
+  const remainingCents =
+    toCents(existing.deposit_amount) -
+    toCents(existing.currently_deposited);
+
+  if (toCents(amount) > remainingCents) {
+    throw new AppError(
+      `Deposit exceeds the remaining ${(
+        Math.max(remainingCents, 0) / 100
+      ).toFixed(2)}`,
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
+  // The repository re-checks status and the cap inside the UPDATE, so two
+  // deposits racing past the checks above cannot overfill the plan together.
+  const plan = await repository.addDeposit(id, userId, amount);
+
+  if (!plan) {
+    throw new AppError(
+      "Saving plan changed meanwhile, try again",
+      HTTP_STATUS.CONFLICT
+    );
+  }
+
+  return plan;
 };
 
 export const deleteSavingPlan = async (id, userId) => {

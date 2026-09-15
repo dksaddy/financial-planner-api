@@ -119,15 +119,24 @@ export const updateStatus = async (
   return result.rows[0];
 };
 
+// Adds the deposit only while the plan is active and the new total stays
+// within deposit_amount, and completes the plan in the same statement when
+// the deposit fills it. Returns nothing when either guard fails.
 export const addDeposit = async (id, userId, amount) => {
   const result = await query(
     `
     UPDATE saving_plans
     SET
       currently_deposited = currently_deposited + $3,
+      status = CASE
+        WHEN currently_deposited + $3 >= deposit_amount THEN 'completed'
+        ELSE status
+      END,
       updated_at = NOW()
     WHERE id = $1
       AND user_id = $2
+      AND status = 'active'
+      AND currently_deposited + $3 <= deposit_amount
     RETURNING *;
     `,
     [id, userId, amount]

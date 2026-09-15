@@ -95,7 +95,9 @@ export const deposit = asyncHandler(async (req, res) => {
   return res.status(HTTP_STATUS.OK).json(
     new ApiResponse(
       HTTP_STATUS.OK,
-      "Deposit added successfully",
+      plan.status === "completed"
+        ? "Deposit added, saving plan completed"
+        : "Deposit added successfully",
       plan
     )
   );

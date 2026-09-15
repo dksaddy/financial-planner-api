@@ -46,6 +46,22 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     expect(response.body.data.status).toBe("active");
   });
 
+  it("should refuse to reopen a fully deposited plan", async () => {
+    const { token, plan } = await createSavingPlan();
+
+    await api()
+      .patch(`/api/saving-plans/${plan.id}/deposit`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ amount: 500 });
+
+    const response = await api()
+      .patch(`/api/saving-plans/${plan.id}/status`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ status: "active" });
+
+    expect(response.status).toBe(400);
+  });
+
   it("should withdraw a completed plan", async () => {
     const { token, plan } = await createSavingPlan();
 

@@ -107,6 +107,15 @@ between: `repository.removeIfUnused` puts the delete and the `NOT EXISTS` guard 
 instead. It returning no row is ambiguous by design — the service calls `findById` first so it can
 answer 404 for "not yours / not there" and 409 for "still in use".
 
+**Saving plans** — status is `active → completed → withdrawn` (migration 013 retired `cancelled`).
+`assertStatusTransition` in `savingPlans.service.js` owns the rules: completed may reopen to active
+only while `currently_deposited < deposit_amount`, only completed can become withdrawn, and withdrawn is
+final. Deposits are capped at `deposit_amount`: the service answers 400 with the remaining figure, and
+`repository.addDeposit` repeats the status and cap guards inside its `UPDATE`, completing the plan in
+the same statement when a deposit fills it — so racing deposits cannot overfill. The web mirrors the
+transitions in `src/lib/savingPlan.js` `canChangeStatus`. Every dashboard figure and list counts
+active plans only.
+
 **Uploads** — `upload.middleware.js` accepts JPG/PNG/WEBP/GIF up to 5MB into memory, and
 `utils/image.js` `compressImage()` shrinks a file before it reaches Supabase: capped at 1024px on the
 long edge and re-encoded as WebP q70, which puts a phone photo under 100KB. It returns the extension

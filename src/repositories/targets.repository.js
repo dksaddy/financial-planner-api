@@ -38,6 +38,25 @@ export const findAllByUser = async (userId) => {
   return rows;
 };
 
+export const isImageInUse = async (
+  userId,
+  imageUrl
+) => {
+  const { rows } = await query(
+    `
+    SELECT EXISTS (
+      SELECT 1
+      FROM targets
+      WHERE user_id=$1
+      AND image_url=$2
+    ) AS in_use
+    `,
+    [userId, imageUrl]
+  );
+
+  return rows[0].in_use;
+};
+
 export const findById = async (
   id,
   userId

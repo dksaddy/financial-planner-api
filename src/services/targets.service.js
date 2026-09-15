@@ -51,6 +51,57 @@ export const createTarget = async (
 
 };
 
+// Public URLs look like `<SUPABASE_URL>/storage/v1/object/public/<bucket>/<path>`.
+// Only a path inside the user's own `targets/` folder is returned, so a URL
+// pointing anywhere else can never cause another file to be removed.
+const getTargetImagePath = (userId, imageUrl) => {
+  const marker = `/object/public/${process.env.SUPABASE_BUCKET}/`;
+  const index = imageUrl.indexOf(marker);
+
+  if (index === -1) return null;
+
+  const path = decodeURIComponent(
+    imageUrl.slice(index + marker.length).split("?")[0]
+  );
+
+  if (
+    !path.startsWith(`${userId}/targets/`) ||
+    path.includes("..")
+  ) {
+    return null;
+  }
+
+  return path;
+};
+
+const removeTargetImage = async (userId, imageUrl) => {
+  // Targets created while picture reuse existed can still share one file, so
+  // it is only removed once no remaining target points at it.
+  const stillUsed = await targetRepository.isImageInUse(
+    userId,
+    imageUrl
+  );
+
+  if (stillUsed) return;
+
+  const path = getTargetImagePath(userId, imageUrl);
+
+  if (!path) return;
+
+  const { error } = await supabase.storage
+    .from(process.env.SUPABASE_BUCKET)
+    .remove([path]);
+
+  // The target row is already gone by now, so a failed cleanup is logged
+  // rather than turned into an error for a delete that did succeed.
+  if (error) {
+    console.error(
+      `Failed to remove target image "${path}":`,
+      error.message
+    );
+  }
+};
+
 export const getTargets = async (
   userId
 ) => {
@@ -134,5 +185,12 @@ export const deleteTarget = async (
     id,
     userId
   );
+
+  if (existing.image_url) {
+    await removeTargetImage(
+      userId,
+      existing.image_url
+    );
+  }
 
 };

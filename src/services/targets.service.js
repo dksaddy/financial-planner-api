@@ -41,29 +41,13 @@ export const createTarget = async (
       .getPublicUrl(fileName);
 
     image_url = data.publicUrl;
-  } else if (body.image_url) {
-    // User picked one of their existing target pictures instead of
-    // uploading a new file — reuse the URL as-is, no re-upload needed.
-    image_url = body.image_url;
   }
-
-  const { image_url: _ignored, ...rest } = body;
 
   return await targetRepository.create({
     userId,
-    ...rest,
+    ...body,
     image_url,
   });
-
-};
-
-export const getTargetImages = async (
-  userId
-) => {
-
-  return await targetRepository.findDistinctImages(
-    userId
-  );
 
 };
 

@@ -31,20 +31,19 @@ export const pool = new Pool({
       ? { rejectUnauthorized: false }
       : false,
 
-  // Must stay UNDER the server's own client limit, not above it. Supabase's
-  // session-mode pooler (port 5432) caps a project at 15 clients, and asking
-  // for 20 meant the 16th connection came back as a FATAL
-  // `EMAXCONNSESSION: max clients reached in session mode`, not as a wait.
+  // `/dashboard` alone opens eight at once — seven parallel repository calls
+  // plus the nested pair inside getTotalExtraSave — so this is sized to serve
+  // that request without queueing.
   //
-  // Below the ceiling, `pg` queues instead: a request that needs a connection
-  // waits for a free one. `/dashboard` alone opens eight at once — seven
-  // parallel repository calls plus the nested pair inside getTotalExtraSave —
-  // so the headroom also covers pgAdmin, a migration run and a second dev
-  // process being connected at the same time.
-  //
-  // Raising this is the wrong fix for load. Point the app at the transaction
-  // pooler (port 6543) instead, which is built for many short-lived clients;
-  // nothing here uses named prepared statements, so it is a URL change.
+  // The ceiling this has to respect belongs to the pooler, and it is shared
+  // with every other client of the project. On the session-mode pooler
+  // (port 5432) that ceiling is 15, low enough that eight here plus pgAdmin
+  // connected alongside crossed it: the refusal arrives as a FATAL
+  // `EMAXCONNSESSION: max clients reached in session mode`, which `pg` cannot
+  // queue behind or retry, so the query rejects and the request 500s. DB_PORT
+  // is the transaction pooler (6543) for that reason — it is built for many
+  // short-lived clients. Nothing here uses named prepared statements or holds
+  // a transaction across statements, which is what that mode rules out.
   max: 8,
 
   // Returned to the pooler sooner than the old 30s, so an idle dev server

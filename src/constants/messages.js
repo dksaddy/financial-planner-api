@@ -123,6 +123,7 @@ export const DASHBOARD_MESSAGES = {
 export const UPLOAD_MESSAGES = {
   UNSUPPORTED_TYPE:
     "Only JPG, PNG, WEBP and GIF images are allowed",
+  TOO_LARGE: (maxMb) => `Image must be ${maxMb}MB or smaller`,
   UNPROCESSABLE:
     "That image could not be processed. Try another file",
 };

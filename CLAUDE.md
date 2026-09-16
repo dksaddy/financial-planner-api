@@ -172,7 +172,10 @@ withdrawal less that tax. The dashboard returns `taxRate`, `tax`, `inHand` and `
 plan; `GET /saving-plans` returns raw rows and the web's `normalizeSavingPlan` mirrors the maths. `taxRate` is optional on create (takes `DEFAULT_TAX_RATE`) and
 on update (keeps the stored rate), and editable in any status like every other plan field.
 
-**Uploads** — `upload.middleware.js` accepts JPG/PNG/WEBP/GIF up to 5MB into memory, and
+**Uploads** — `upload.middleware.js` accepts `IMAGE_TYPES` up to `IMAGE_MAX_MB` (JPG/PNG/WEBP/GIF,
+5MB — both in `limits.js`, mirrored by the web's pickers) into memory. Its `single(field)` wraps
+multer's so an oversized file answers 400 `UPLOAD_MESSAGES.TOO_LARGE` rather than the generic 500 a raw
+`MulterError` would reach the client as. Then
 `utils/image.js` `compressImage()` shrinks a file before it reaches Supabase: capped at 1024px on the
 long edge and re-encoded as WebP q70, which puts a phone photo under 100KB. It returns the extension
 and content type to store under, so callers must use those rather than the original filename's — the

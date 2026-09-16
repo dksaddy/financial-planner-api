@@ -34,3 +34,14 @@ export const WORKING_DAYS_PER_WEEK_MAX = 7;
 export const TAX_RATE_MIN = 0;
 export const TAX_RATE_MAX = 100;
 export const DEFAULT_TAX_RATE = 15;
+
+// What an uploaded picture (a target image, an avatar) may be. The web's
+// `constants/limits.js` mirrors both, so a picker refuses a file before it is
+// sent and says why.
+export const IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+export const IMAGE_MAX_MB = 5;

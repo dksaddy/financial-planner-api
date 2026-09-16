@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { api } from "../helpers/request.helper.js";
+import { TEST_USER } from "../helpers/constants.js";
 import { login, loginSecondUser } from "../helpers/auth.helper.js";
 import { createSavingPlan } from "../helpers/savingPlan.helper.js";
 
@@ -16,7 +17,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "completed" });
+      .send({ status: "completed", password: TEST_USER.password });
 
     expect(response.status).toBe(200);
     expect(response.body.data.status).toBe("completed");
@@ -35,12 +36,12 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "completed" });
+      .send({ status: "completed", password: TEST_USER.password });
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "active" });
+      .send({ status: "active", password: TEST_USER.password });
 
     expect(response.status).toBe(200);
     expect(response.body.data.status).toBe("active");
@@ -52,12 +53,12 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     await api()
       .patch(`/api/saving-plans/${plan.id}/deposit`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ amount: 500 });
+      .send({ amount: 500, password: TEST_USER.password });
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "active" });
+      .send({ status: "active", password: TEST_USER.password });
 
     expect(response.status).toBe(400);
   });
@@ -68,12 +69,12 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "completed" });
+      .send({ status: "completed", password: TEST_USER.password });
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "withdrawn" });
+      .send({ status: "withdrawn", password: TEST_USER.password });
 
     expect(response.status).toBe(200);
     expect(response.body.data.status).toBe("withdrawn");
@@ -85,7 +86,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "withdrawn" });
+      .send({ status: "withdrawn", password: TEST_USER.password });
 
     expect(response.status).toBe(400);
 
@@ -103,14 +104,14 @@ describe("PATCH /api/saving-plans/:id/status", () => {
       await api()
         .patch(`/api/saving-plans/${plan.id}/status`)
         .set("Authorization", `Bearer ${token}`)
-        .send({ status });
+        .send({ status, password: TEST_USER.password });
     }
 
     for (const status of ["active", "completed"]) {
       const response = await api()
         .patch(`/api/saving-plans/${plan.id}/status`)
         .set("Authorization", `Bearer ${token}`)
-        .send({ status });
+        .send({ status, password: TEST_USER.password });
 
       expect(response.status).toBe(400);
     }
@@ -123,7 +124,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
       const response = await api()
         .patch(`/api/saving-plans/${plan.id}/status`)
         .set("Authorization", `Bearer ${token}`)
-        .send({ status });
+        .send({ status, password: TEST_USER.password });
 
       expect(response.status).toBe(400);
     }
@@ -135,12 +136,12 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "completed" });
+      .send({ status: "completed", password: TEST_USER.password });
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/deposit`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ amount: 100 });
+      .send({ amount: 100, password: TEST_USER.password });
 
     expect(response.status).toBe(400);
   });
@@ -150,7 +151,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
 
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
-      .send({ status: "completed" });
+      .send({ status: "completed", password: TEST_USER.password });
 
     expect(response.status).toBe(401);
   });
@@ -163,7 +164,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
         "/api/saving-plans/00000000-0000-0000-0000-000000000000/status"
       )
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "completed" });
+      .send({ status: "completed", password: TEST_USER.password });
 
     expect(response.status).toBe(404);
   });
@@ -176,7 +177,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
     const response = await api()
       .patch(`/api/saving-plans/${plan.id}/status`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ status: "completed" });
+      .send({ status: "completed", password: TEST_USER.password });
 
     expect(response.status).toBe(404);
   });

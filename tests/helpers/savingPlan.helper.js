@@ -1,5 +1,6 @@
 import { api } from "./request.helper.js";
 import { login } from "./auth.helper.js";
+import { TEST_USER } from "./constants.js";
 
 export async function createSavingPlan(
   token = null,
@@ -18,6 +19,9 @@ export async function createSavingPlan(
     depositAmount: 500,
     depositFrequency: 7,
     withdrawalAmount: 0,
+    // Every saving-plan mutation is password-confirmed. Overridable, so a test
+    // can still exercise a wrong or missing one.
+    password: TEST_USER.password,
     ...overrides,
   };
 

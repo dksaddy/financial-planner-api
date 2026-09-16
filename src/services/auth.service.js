@@ -75,6 +75,36 @@ export const loginUser = async ({ email, password }) => {
   return createSession(user);
 };
 
+// Step-up check for actions that ask the signed-in user to confirm with their
+// password. Throws on failure and returns nothing, so a caller cannot mistake
+// a falsy result for a pass — `await assertPassword(...)` then act.
+//
+// FORBIDDEN, not UNAUTHORIZED: the token is valid and the session stays alive,
+// it is this one action that is refused. The web client logs out on any 401 it
+// did not expect, and a mistyped confirmation must not end the session.
+export const assertPassword = async (userId, password) => {
+  const user = await userRepository.findByIdWithPassword(userId);
+
+  if (!user) {
+    throw new AppError(
+      AUTH_MESSAGES.USER_NOT_FOUND,
+      HTTP_STATUS.NOT_FOUND
+    );
+  }
+
+  const isPasswordMatched = await bcrypt.compare(
+    password,
+    user.password
+  );
+
+  if (!isPasswordMatched) {
+    throw new AppError(
+      AUTH_MESSAGES.PASSWORD_INCORRECT,
+      HTTP_STATUS.FORBIDDEN
+    );
+  }
+};
+
 export const getCurrentUser = async (userId) => {
   const user = await userRepository.findById(userId);
 

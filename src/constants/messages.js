@@ -18,6 +18,13 @@ export const AUTH_MESSAGES = {
   AUTH_REQUIRED: "Authentication required",
   INVALID_TOKEN: "Invalid or expired token",
   USER_NOT_FOUND: "User not found",
+
+  // Re-authentication: the caller is signed in, but this action asks them to
+  // prove the password again. Deliberately does not say whether the account
+  // or the password was the problem.
+  PASSWORD_INCORRECT: "Incorrect password",
+  TOO_MANY_PASSWORD_ATTEMPTS:
+    "Too many incorrect passwords. Please try again later.",
 };
 
 export const TARGET_MESSAGES = {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { api } from "../helpers/request.helper.js";
+import { TEST_USER } from "../helpers/constants.js";
 import { login } from "../helpers/auth.helper.js";
 import { createSavingPlan } from "../helpers/savingPlan.helper.js";
 
@@ -18,6 +19,7 @@ describe("PUT /api/saving-plans/:id", () => {
         depositAmount: 1000,
         depositFrequency: 30,
         withdrawalAmount: 100,
+        password: TEST_USER.password,
       });
 
     expect(response.status).toBe(200);
@@ -42,6 +44,7 @@ describe("PUT /api/saving-plans/:id", () => {
         depositAmount: 1000,
         depositFrequency: 30,
         withdrawalAmount: 100,
+        password: TEST_USER.password,
       });
 
     expect(response.status).toBe(401);
@@ -63,6 +66,7 @@ describe("PUT /api/saving-plans/:id", () => {
         depositAmount: -10,
         depositFrequency: 0,
         withdrawalAmount: -1,
+        password: TEST_USER.password,
       });
 
     expect(response.status).toBe(400);
@@ -84,6 +88,7 @@ describe("PUT /api/saving-plans/:id", () => {
         depositAmount: 1000,
         depositFrequency: 30,
         withdrawalAmount: 100,
+        password: TEST_USER.password,
       });
 
     expect(response.status).toBe(404);

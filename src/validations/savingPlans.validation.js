@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+// Every saving-plan mutation is confirmed with the account password, so each
+// schema below carries this field.
+//
+// Only presence is checked, never length or shape: this is an existing
+// password being re-typed, not a new one being chosen. Applying the register
+// schema's rules here would reject a valid older password and would tell an
+// attacker the policy before they ever guess. The real verdict is bcrypt's,
+// in `assertPassword`.
+const confirmationPassword = z
+  .string()
+  .min(1, "Password is required");
+
 export const createSavingPlanSchema = z.object({
   name: z
     .string()
@@ -26,10 +38,20 @@ export const createSavingPlanSchema = z.object({
     .positive("Deposit frequency must be greater than 0"),
 
   withdrawalAmount: z.number().min(0),
+
+  password: confirmationPassword,
 });
 
 export const depositSavingPlanSchema = z.object({
   amount: z.number().positive("Deposit amount must be greater than 0"),
+
+  password: confirmationPassword,
+});
+
+// DELETE carries a body for the confirmation, which is why it now validates
+// at all. Clients must send it as a JSON body (axios: `delete(url, { data })`).
+export const deleteSavingPlanSchema = z.object({
+  password: confirmationPassword,
 });
 
 // The three values the saving_plans.status check constraint allows. Which
@@ -38,4 +60,6 @@ export const updateSavingPlanStatusSchema = z.object({
   status: z.enum(["active", "completed", "withdrawn"], {
     error: "Status must be active, completed or withdrawn",
   }),
+
+  password: confirmationPassword,
 });

@@ -73,7 +73,8 @@ export const updateStatus = asyncHandler(async (req, res) => {
   const plan = await setSavingPlanStatus(
     req.params.id,
     req.user.id,
-    req.body.status
+    req.body.status,
+    req.body.password
   );
 
   return res.status(HTTP_STATUS.OK).json(
@@ -89,7 +90,8 @@ export const deposit = asyncHandler(async (req, res) => {
   const plan = await depositToSavingPlan(
     req.params.id,
     req.user.id,
-    req.body.amount
+    req.body.amount,
+    req.body.password
   );
 
   return res.status(HTTP_STATUS.OK).json(
@@ -106,7 +108,8 @@ export const deposit = asyncHandler(async (req, res) => {
 export const remove = asyncHandler(async (req, res) => {
   await deleteSavingPlan(
     req.params.id,
-    req.user.id
+    req.user.id,
+    req.body.password
   );
 
   return res.status(200).json(

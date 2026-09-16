@@ -2,8 +2,20 @@ import * as savingPlansRepository from "../repositories/savingPlans.repository.j
 import * as repository from "../repositories/savingPlans.repository.js";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { assertPassword } from "./auth.service.js";
+
+// Saving plans are the one resource where every mutation is confirmed with the
+// account password. The check lives here rather than in a middleware because
+// it belongs with the rule, and because each function below must run it before
+// it touches anything — a wrong password may not delete a plan, add a deposit
+// or move a status, so `assertPassword` throwing is what keeps that true.
+//
+// `data.password` is only ever read here; the repositories list their columns
+// explicitly, so it cannot reach a query.
 
 export const createSavingPlan = async (userId, data) => {
+  await assertPassword(userId, data.password);
+
   return await savingPlansRepository.create(userId, data);
 };
 
@@ -22,6 +34,8 @@ export const getSavingPlanById = async (id, userId) => {
 };
 
 export const updateSavingPlan = async (id, userId, data) => {
+  await assertPassword(userId, data.password);
+
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
@@ -67,7 +81,14 @@ const assertStatusTransition = (plan, status) => {
   }
 };
 
-export const setSavingPlanStatus = async (id, userId, status) => {
+export const setSavingPlanStatus = async (
+  id,
+  userId,
+  status,
+  password
+) => {
+  await assertPassword(userId, password);
+
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
@@ -95,7 +116,14 @@ export const setSavingPlanStatus = async (id, userId, status) => {
   return plan;
 };
 
-export const depositToSavingPlan = async (id, userId, amount) => {
+export const depositToSavingPlan = async (
+  id,
+  userId,
+  amount,
+  password
+) => {
+  await assertPassword(userId, password);
+
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
@@ -136,7 +164,9 @@ export const depositToSavingPlan = async (id, userId, amount) => {
   return plan;
 };
 
-export const deleteSavingPlan = async (id, userId) => {
+export const deleteSavingPlan = async (id, userId, password) => {
+  await assertPassword(userId, password);
+
   const existing = await repository.findById(id, userId);
 
   if (!existing) {

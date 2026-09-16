@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { api } from "../helpers/request.helper.js";
+import { TEST_USER } from "../helpers/constants.js";
 import { login } from "../helpers/auth.helper.js";
 import { createSavingPlan } from "../helpers/savingPlan.helper.js";
 
@@ -9,7 +10,8 @@ describe("DELETE /api/saving-plans/:id", () => {
 
     const response = await api()
       .delete(`/api/saving-plans/${plan.id}`)
-      .set("Authorization", `Bearer ${token}`);
+      .set("Authorization", `Bearer ${token}`)
+      .send({ password: TEST_USER.password });
 
     expect(response.status).toBe(200);
 
@@ -40,7 +42,8 @@ describe("DELETE /api/saving-plans/:id", () => {
 
     const response = await api()
       .delete("/api/saving-plans/00000000-0000-0000-0000-000000000000")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Authorization", `Bearer ${token}`)
+      .send({ password: TEST_USER.password });
 
     expect(response.status).toBe(404);
 

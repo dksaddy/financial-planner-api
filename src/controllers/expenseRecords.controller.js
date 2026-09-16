@@ -1,5 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { EXPENSE_RECORD_MESSAGES } from "../constants/messages.js";
 
 import {
     createExpenseRecord,
@@ -16,10 +18,10 @@ export const create = asyncHandler(async (req,res)=>{
         req.body
     );
 
-    res.status(201).json(
+    res.status(HTTP_STATUS.CREATED).json(
         new ApiResponse(
-            201,
-            "Expense record created successfully",
+            HTTP_STATUS.CREATED,
+            EXPENSE_RECORD_MESSAGES.CREATED,
             record
         )
     );
@@ -39,8 +41,8 @@ export const getAll = asyncHandler(async(req,res)=>{
 
     res.json(
         new ApiResponse(
-            200,
-            "Expense records fetched successfully",
+            HTTP_STATUS.OK,
+            EXPENSE_RECORD_MESSAGES.FETCHED,
             result.records,
             {
                 pagination: result.pagination,
@@ -62,8 +64,8 @@ export const getById = asyncHandler(async(req,res)=>{
 
     res.json(
         new ApiResponse(
-            200,
-            "Expense record fetched successfully",
+            HTTP_STATUS.OK,
+            EXPENSE_RECORD_MESSAGES.FETCHED_ONE,
             record
         )
     );
@@ -80,8 +82,8 @@ export const update = asyncHandler(async(req,res)=>{
 
     res.json(
         new ApiResponse(
-            200,
-            "Expense record updated successfully",
+            HTTP_STATUS.OK,
+            EXPENSE_RECORD_MESSAGES.UPDATED,
             record
         )
     );
@@ -97,8 +99,8 @@ export const remove = asyncHandler(async(req,res)=>{
 
     res.json(
         new ApiResponse(
-            200,
-            "Expense record deleted successfully"
+            HTTP_STATUS.OK,
+            EXPENSE_RECORD_MESSAGES.DELETED
         )
     );
 

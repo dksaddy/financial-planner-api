@@ -2,16 +2,17 @@ import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import * as userService from "../services/user.service.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { USER_MESSAGES } from "../constants/messages.js";
 import { uploadAvatar } from "../services/user.service.js";
 import { changePassword } from "../services/user.service.js";
 
 export const getProfile =
   asyncHandler(async (req, res) => {
 
-    return res.status(200).json(
+    return res.status(HTTP_STATUS.OK).json(
       new ApiResponse(
         HTTP_STATUS.OK,
-        "Profile fetched successfully",
+        USER_MESSAGES.PROFILE_FETCHED,
         req.user
       )
     );
@@ -27,10 +28,10 @@ export const updateProfile =
         req.body
       );
 
-    return res.status(200).json(
+    return res.status(HTTP_STATUS.OK).json(
       new ApiResponse(
         HTTP_STATUS.OK,
-        "Profile updated successfully",
+        USER_MESSAGES.PROFILE_UPDATED,
         user
       )
     );
@@ -43,10 +44,10 @@ export const updateProfile =
     req.file
   );
 
-  return res.status(200).json(
+  return res.status(HTTP_STATUS.OK).json(
     new ApiResponse(
       HTTP_STATUS.OK,
-      "Avatar updated successfully",
+      USER_MESSAGES.AVATAR_UPDATED,
       user
     )
   );
@@ -59,7 +60,7 @@ export const getAvatars = asyncHandler(async (req, res) => {
   return res.status(HTTP_STATUS.OK).json(
     new ApiResponse(
       HTTP_STATUS.OK,
-      "Avatars fetched successfully",
+      USER_MESSAGES.AVATARS_FETCHED,
       avatars
     )
   );
@@ -74,7 +75,7 @@ export const selectAvatar = asyncHandler(async (req, res) => {
   return res.status(HTTP_STATUS.OK).json(
     new ApiResponse(
       HTTP_STATUS.OK,
-      "Profile photo updated successfully",
+      USER_MESSAGES.AVATAR_SELECTED,
       user
     )
   );
@@ -89,7 +90,7 @@ export const deleteAvatar = asyncHandler(async (req, res) => {
   return res.status(HTTP_STATUS.OK).json(
     new ApiResponse(
       HTTP_STATUS.OK,
-      "Photo deleted successfully",
+      USER_MESSAGES.AVATAR_DELETED,
       removed
     )
   );
@@ -103,10 +104,10 @@ export const updatePassword =
       req.body
     );
 
-    return res.status(200).json(
+    return res.status(HTTP_STATUS.OK).json(
       new ApiResponse(
         HTTP_STATUS.OK,
-        "Password updated successfully"
+        USER_MESSAGES.PASSWORD_UPDATED
       )
     );
 

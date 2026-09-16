@@ -3,6 +3,10 @@ import { v4 as uuid } from "uuid";
 import * as userRepository from "../repositories/user.repository.js";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import {
+  AUTH_MESSAGES,
+  USER_MESSAGES,
+} from "../constants/messages.js";
 import bcrypt from "bcrypt";
 
 export const updateProfile = async (
@@ -18,7 +22,7 @@ export const updateProfile = async (
 
   if (exists) {
     throw new AppError(
-      "Email already exists",
+      AUTH_MESSAGES.EMAIL_EXISTS,
       HTTP_STATUS.CONFLICT
     );
   }
@@ -32,7 +36,7 @@ export const updateProfile = async (
 export const uploadAvatar = async (userId, file) => {
   if (!file) {
     throw new AppError(
-      "Avatar image is required.",
+      USER_MESSAGES.AVATAR_REQUIRED,
       HTTP_STATUS.BAD_REQUEST
     );
   }
@@ -86,7 +90,7 @@ const resolveAvatarPath = (userId, fileName) => {
     name.includes("..")
   ) {
     throw new AppError(
-      "Invalid image.",
+      USER_MESSAGES.AVATAR_INVALID,
       HTTP_STATUS.BAD_REQUEST
     );
   }
@@ -141,7 +145,7 @@ export const selectAvatar = async (userId, fileName) => {
 
   if (!album.some((photo) => photo.name === fileName.trim())) {
     throw new AppError(
-      "Image not found.",
+      USER_MESSAGES.AVATAR_NOT_FOUND,
       HTTP_STATUS.NOT_FOUND
     );
   }
@@ -159,7 +163,7 @@ export const deleteAvatar = async (userId, fileName) => {
 
   if (user?.avatar_url === buildPublicUrl(path)) {
     throw new AppError(
-      "This is your current profile picture. Upload a new photo before deleting it.",
+      USER_MESSAGES.AVATAR_IN_USE,
       HTTP_STATUS.BAD_REQUEST
     );
   }
@@ -179,7 +183,7 @@ export const deleteAvatar = async (userId, fileName) => {
   // reports nothing removed, which for us means the file never existed.
   if (!data?.length) {
     throw new AppError(
-      "Image not found.",
+      USER_MESSAGES.AVATAR_NOT_FOUND,
       HTTP_STATUS.NOT_FOUND
     );
   }
@@ -206,7 +210,7 @@ export const changePassword = async (
 
   if (!isMatch) {
     throw new AppError(
-      "Old password is incorrect.",
+      USER_MESSAGES.OLD_PASSWORD_INCORRECT,
       HTTP_STATUS.BAD_REQUEST
     );
   }

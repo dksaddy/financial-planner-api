@@ -43,7 +43,7 @@ describe("POST /api/expense-records", () => {
 
     expect(second.status).toBe(409);
     expect(second.body.message).toBe(
-      "An expense record already exists for that date."
+      "An expense record already exists for that date"
     );
   });
 

@@ -1,4 +1,5 @@
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { COMMON_MESSAGES } from "../constants/messages.js";
 import { env } from "../config/env.js";
 
 const errorHandler = (err, req, res, next) => {
@@ -10,7 +11,7 @@ const errorHandler = (err, req, res, next) => {
   // behind a generic message instead of sending it to the client.
   const message = err.isOperational
     ? err.message
-    : "Internal Server Error";
+    : COMMON_MESSAGES.INTERNAL_SERVER_ERROR;
 
   // Always log the real error server-side so nothing is lost for debugging.
   if (!err.isOperational) {

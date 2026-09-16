@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { COMMON_MESSAGES } from "./constants/messages.js";
 import authRoutes from "./routes/auth.routes.js";
 import notFound from "./middlewares/notFound.middleware.js";
 import errorHandler from "./middlewares/error.middleware.js";
@@ -36,7 +37,7 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS"));
+      return callback(new Error(COMMON_MESSAGES.CORS_BLOCKED));
     },
   })
 );
@@ -47,7 +48,7 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "Financial Planner API",
+    message: COMMON_MESSAGES.API_ROOT,
   });
 });
 

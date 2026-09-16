@@ -132,5 +132,8 @@ describe("GET /api/expense-types", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      "Status must be one of: active, inactive, all"
+    );
   });
 });

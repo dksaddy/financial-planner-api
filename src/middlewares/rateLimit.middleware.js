@@ -23,7 +23,7 @@ export const authLimiter = rateLimit({
     res.status(HTTP_STATUS.TOO_MANY_REQUESTS).json({
       success: false,
       statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
-      message: "Too many attempts. Please try again later.",
+      message: AUTH_MESSAGES.TOO_MANY_ATTEMPTS,
     });
   },
 });

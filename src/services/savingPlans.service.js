@@ -2,6 +2,8 @@ import * as savingPlansRepository from "../repositories/savingPlans.repository.j
 import * as repository from "../repositories/savingPlans.repository.js";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { SAVING_PLAN_MESSAGES } from "../constants/messages.js";
+import { SAVING_PLAN_STATUS } from "../constants/status.js";
 import { assertPassword } from "./auth.service.js";
 
 // Saving plans are the one resource where every mutation is confirmed with the
@@ -27,7 +29,7 @@ export const getSavingPlanById = async (id, userId) => {
   const plan = await repository.findById(id, userId);
 
   if (!plan) {
-    throw new AppError("Saving plan not found", HTTP_STATUS.NOT_FOUND);
+    throw new AppError(SAVING_PLAN_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   return plan;
@@ -39,7 +41,7 @@ export const updateSavingPlan = async (id, userId, data) => {
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
-    throw new AppError("Saving plan not found", HTTP_STATUS.NOT_FOUND);
+    throw new AppError(SAVING_PLAN_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   return await repository.update(id, userId, data);
@@ -59,23 +61,26 @@ const isFullyDeposited = (plan) =>
 const assertStatusTransition = (plan, status) => {
   if (plan.status === status) return;
 
-  if (plan.status === "withdrawn") {
+  if (plan.status === SAVING_PLAN_STATUS.WITHDRAWN) {
     throw new AppError(
-      "A withdrawn saving plan cannot change status",
+      SAVING_PLAN_MESSAGES.STATUS_FINAL,
       HTTP_STATUS.BAD_REQUEST
     );
   }
 
-  if (status === "withdrawn" && plan.status !== "completed") {
+  if (
+    status === SAVING_PLAN_STATUS.WITHDRAWN &&
+    plan.status !== SAVING_PLAN_STATUS.COMPLETED
+  ) {
     throw new AppError(
-      "Only a completed saving plan can be withdrawn",
+      SAVING_PLAN_MESSAGES.WITHDRAW_NEEDS_COMPLETED,
       HTTP_STATUS.BAD_REQUEST
     );
   }
 
-  if (status === "active" && isFullyDeposited(plan)) {
+  if (status === SAVING_PLAN_STATUS.ACTIVE && isFullyDeposited(plan)) {
     throw new AppError(
-      "A fully deposited saving plan cannot be reopened",
+      SAVING_PLAN_MESSAGES.REOPEN_NEEDS_REMAINING,
       HTTP_STATUS.BAD_REQUEST
     );
   }
@@ -92,7 +97,7 @@ export const setSavingPlanStatus = async (
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
-    throw new AppError("Saving plan not found", HTTP_STATUS.NOT_FOUND);
+    throw new AppError(SAVING_PLAN_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   assertStatusTransition(existing, status);
@@ -108,7 +113,7 @@ export const setSavingPlanStatus = async (
 
   if (!plan) {
     throw new AppError(
-      "Saving plan status changed meanwhile, try again",
+      SAVING_PLAN_MESSAGES.STATUS_CHANGED_MEANWHILE,
       HTTP_STATUS.CONFLICT
     );
   }
@@ -127,12 +132,12 @@ export const depositToSavingPlan = async (
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
-    throw new AppError("Saving plan not found", HTTP_STATUS.NOT_FOUND);
+    throw new AppError(SAVING_PLAN_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
-  if (existing.status !== "active") {
+  if (existing.status !== SAVING_PLAN_STATUS.ACTIVE) {
     throw new AppError(
-      "Deposits can only be added to active saving plans",
+      SAVING_PLAN_MESSAGES.DEPOSIT_NEEDS_ACTIVE,
       HTTP_STATUS.BAD_REQUEST
     );
   }
@@ -143,9 +148,9 @@ export const depositToSavingPlan = async (
 
   if (toCents(amount) > remainingCents) {
     throw new AppError(
-      `Deposit exceeds the remaining ${(
-        Math.max(remainingCents, 0) / 100
-      ).toFixed(2)}`,
+      SAVING_PLAN_MESSAGES.DEPOSIT_EXCEEDS_REMAINING(
+        (Math.max(remainingCents, 0) / 100).toFixed(2)
+      ),
       HTTP_STATUS.BAD_REQUEST
     );
   }
@@ -156,7 +161,7 @@ export const depositToSavingPlan = async (
 
   if (!plan) {
     throw new AppError(
-      "Saving plan changed meanwhile, try again",
+      SAVING_PLAN_MESSAGES.CHANGED_MEANWHILE,
       HTTP_STATUS.CONFLICT
     );
   }
@@ -170,7 +175,7 @@ export const deleteSavingPlan = async (id, userId, password) => {
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
-    throw new AppError("Saving plan not found", HTTP_STATUS.NOT_FOUND);
+    throw new AppError(SAVING_PLAN_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
   return await repository.remove(id, userId);

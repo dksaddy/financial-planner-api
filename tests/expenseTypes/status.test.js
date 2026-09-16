@@ -20,6 +20,7 @@ describe("PATCH /api/expense-types/:id/status", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.is_active).toBe(false);
+    expect(response.body.message).toBe("Expense type deactivated successfully");
 
     const check = await api()
       .get(`/api/expense-types/${expenseType.id}`)
@@ -44,6 +45,7 @@ describe("PATCH /api/expense-types/:id/status", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.is_active).toBe(true);
+    expect(response.body.message).toBe("Expense type activated successfully");
   });
 
   it("should reject a non-boolean status", async () => {

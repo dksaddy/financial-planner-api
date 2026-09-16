@@ -1,6 +1,7 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { DASHBOARD_MESSAGES } from "../constants/messages.js";
 import { getDashboardData } from "../services/dashboard.service.js";
 
 export const getDashboard = asyncHandler(async (req, res) => {
@@ -9,7 +10,7 @@ export const getDashboard = asyncHandler(async (req, res) => {
   return res.status(HTTP_STATUS.OK).json(
     new ApiResponse(
       HTTP_STATUS.OK,
-      "Dashboard fetched successfully",
+      DASHBOARD_MESSAGES.FETCHED,
       dashboard
     )
   );

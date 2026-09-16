@@ -21,6 +21,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.status).toBe("completed");
+    expect(response.body.message).toBe("Saving plan set to completed");
 
     const check = await api()
       .get(`/api/saving-plans/${plan.id}`)
@@ -45,6 +46,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.status).toBe("active");
+    expect(response.body.message).toBe("Saving plan set to active");
   });
 
   it("should refuse to reopen a fully deposited plan", async () => {
@@ -78,6 +80,7 @@ describe("PATCH /api/saving-plans/:id/status", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.data.status).toBe("withdrawn");
+    expect(response.body.message).toBe("Saving plan set to withdrawn");
   });
 
   it("should refuse to withdraw an active plan", async () => {
@@ -127,6 +130,9 @@ describe("PATCH /api/saving-plans/:id/status", () => {
         .send({ status, password: TEST_USER.password });
 
       expect(response.status).toBe(400);
+      expect(response.body.errors[0].message).toBe(
+        "Status must be active, completed or withdrawn"
+      );
     }
   });
 

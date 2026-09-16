@@ -6,6 +6,10 @@ import { toDateString } from "../utils/date.js";
 
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import {
+  EXPENSE_RECORD_MESSAGES,
+  EXPENSE_TYPE_MESSAGES,
+} from "../constants/messages.js";
 
 // Belt-and-braces: guarantee every record leaving this service has a
 // plain "YYYY-MM-DD" `date` string, regardless of whether it arrived
@@ -21,7 +25,7 @@ const withNormalizedDate = (record) =>
 const asDateTakenError = (error) => {
   if (error?.code === "23505") {
     return new AppError(
-      "An expense record already exists for that date.",
+      EXPENSE_RECORD_MESSAGES.DATE_TAKEN,
       HTTP_STATUS.CONFLICT
     );
   }
@@ -39,14 +43,14 @@ const loadActiveExpenseType = async (expenseTypeId, userId) => {
 
   if (!expenseType) {
     throw new AppError(
-      "Expense type not found",
+      EXPENSE_TYPE_MESSAGES.NOT_FOUND,
       HTTP_STATUS.NOT_FOUND
     );
   }
 
   if (!expenseType.is_active) {
     throw new AppError(
-      "Expense type is inactive",
+      EXPENSE_TYPE_MESSAGES.INACTIVE,
       HTTP_STATUS.BAD_REQUEST
     );
   }
@@ -157,7 +161,7 @@ export const getExpenseRecordById = async (id, userId) => {
 
   if (!record) {
     throw new AppError(
-      "Expense record not found",
+      EXPENSE_RECORD_MESSAGES.NOT_FOUND,
       HTTP_STATUS.NOT_FOUND
     );
   }
@@ -174,7 +178,7 @@ export const updateExpenseRecord = async (
 
   if (!existing) {
     throw new AppError(
-      "Expense record not found",
+      EXPENSE_RECORD_MESSAGES.NOT_FOUND,
       HTTP_STATUS.NOT_FOUND
     );
   }
@@ -202,7 +206,7 @@ export const updateExpenseRecord = async (
 
   if (!record) {
     throw new AppError(
-      "Expense record not found",
+      EXPENSE_RECORD_MESSAGES.NOT_FOUND,
       HTTP_STATUS.NOT_FOUND
     );
   }
@@ -236,7 +240,7 @@ export const deleteExpenseRecord = async (
 
   if (!record) {
     throw new AppError(
-      "Expense record not found",
+      EXPENSE_RECORD_MESSAGES.NOT_FOUND,
       HTTP_STATUS.NOT_FOUND
     );
   }

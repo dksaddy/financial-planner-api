@@ -2,6 +2,7 @@ import sharp from "sharp";
 
 import AppError from "./AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { UPLOAD_MESSAGES } from "../constants/messages.js";
 
 // A target picture is never shown above ~450px wide (the add-target preview);
 // the cards and thumbnails are far smaller. 1024 leaves room for a retina
@@ -67,7 +68,7 @@ export const compressImage = async (file) => {
     // sharp throws on a file that passed the mimetype filter but is not
     // actually decodable — a renamed .txt, say, or a truncated upload.
     throw new AppError(
-      "That image could not be processed. Try another file.",
+      UPLOAD_MESSAGES.UNPROCESSABLE,
       HTTP_STATUS.BAD_REQUEST
     );
   }

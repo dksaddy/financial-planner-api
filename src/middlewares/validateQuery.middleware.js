@@ -1,3 +1,6 @@
+import { HTTP_STATUS } from "../constants/httpStatus.js";
+import { COMMON_MESSAGES } from "../constants/messages.js";
+
 // Same contract as validate.middleware.js, but for the query string.
 //
 // Express 5 exposes `req.query` as a getter with no setter, so the parsed
@@ -8,9 +11,9 @@ const validateQuery = (schema) => {
     const result = schema.safeParse(req.query);
 
     if (!result.success) {
-      return res.status(400).json({
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
         success: false,
-        message: "Validation failed",
+        message: COMMON_MESSAGES.VALIDATION_FAILED,
         errors: result.error.issues.map((issue) => ({
           field: issue.path.join("."),
           message: issue.message,

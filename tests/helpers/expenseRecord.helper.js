@@ -34,16 +34,29 @@ export async function createExpenseRecord(token = null, overrides = {}) {
 
   const { expenseType } = await createExpenseType(token);
 
-  const payload = {
-    expense_type_id: expenseType.id,
-    date: nextExpenseDate(),
-    ...overrides,
-  };
+  const post = (date) =>
+    api()
+      .post("/api/expense-records")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        expense_type_id: expenseType.id,
+        date,
+        ...overrides,
+      });
 
-  const response = await api()
-    .post("/api/expense-records")
-    .set("Authorization", `Bearer ${token}`)
-    .send(payload);
+  let response = await post(nextExpenseDate());
+
+  // The random base only makes a clash unlikely: records from earlier runs
+  // stay in the database until `prepare:test` wipes it, so a day can already
+  // be taken, and the helper handed back no record. Unless the caller pinned
+  // the date, move on to the next free day.
+  for (
+    let attempt = 0;
+    response.status === 409 && overrides.date === undefined && attempt < 20;
+    attempt++
+  ) {
+    response = await post(nextExpenseDate());
+  }
 
   return {
     token,

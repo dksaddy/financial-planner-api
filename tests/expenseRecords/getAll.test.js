@@ -193,6 +193,9 @@ describe("GET /api/expense-records", () => {
     expect(zeroPage.status).toBe(400);
     expect(hugeLimit.status).toBe(400);
     expect(badMonth.status).toBe(400);
+
+    expect(zeroPage.body.errors[0].message).toBe("Page must be at least 1");
+    expect(hugeLimit.body.errors[0].message).toBe("Limit cannot exceed 100");
   });
 
   it("should not leak another user's records into the count", async () => {

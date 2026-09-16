@@ -1,33 +1,30 @@
 import { z } from "zod";
 
+import { TARGET_MESSAGES } from "../constants/messages.js";
+import { TARGET_STATUSES } from "../constants/status.js";
+import { name } from "./fields.js";
+
+const { VALIDATION } = TARGET_MESSAGES;
+
 export const createTargetSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Target name must be at least 2 characters.")
-    .max(100, "Target name cannot exceed 100 characters."),
+  name,
 
   target_amount: z
     .coerce
     .number()
-    .positive("Target amount must be greater than 0."),
+    .positive(VALIDATION.AMOUNT_POSITIVE),
 });
 
 export const updateTargetSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2)
-    .max(100)
-    .optional(),
+  name: name.optional(),
 
   target_amount: z
     .coerce
     .number()
-    .positive()
+    .positive(VALIDATION.AMOUNT_POSITIVE)
     .optional(),
 
   status: z
-    .enum(["pending", "completed"])
+    .enum(TARGET_STATUSES)
     .optional(),
 });

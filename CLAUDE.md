@@ -66,6 +66,33 @@ short-circuit in `validate.middleware.js` with a different shape (`{ success, me
 
 ## Cross-cutting domain logic
 
+**Messages and statuses** — two files, and nothing else in `src/` types either kind of string.
+`src/constants/status.js` holds the status vocabularies: saving plans, expense types plus the `all`
+filter value and `expenseTypeStatusOf`, targets (expense records have none). `src/constants/messages.js`
+holds one message group per resource: `COMMON_`, `AUTH_`, `USER_`, `DASHBOARD_`, `UPLOAD_`,
+`SAVING_PLAN_`, `EXPENSE_TYPE_`, `EXPENSE_RECORD_`, `TARGET_`. Each group nests its Zod field rules
+under `VALIDATION`, so a resource's success lines, error lines and field rules sit together. A line
+that carries a value is a function (`DEPOSIT_EXCEEDS_REMAINING(remaining)`, `TOTAL_MUST_REMAIN(total)`,
+`ROUTE_NOT_FOUND(url)`), and a per-status line is a map keyed off the status constants
+(`STATUS_CHANGED`). No message ends with a full stop.
+
+Validation is shared the same way. `src/constants/limits.js` holds every length and range
+(`NAME_MIN`/`NAME_MAX` — one rule for every stored name —, `PASSWORD_MIN`, the page/limit bounds), and a
+message that quotes one is a function of it, so the rule and the message read the same constant.
+`src/validations/fields.js` defines each field more than one schema accepts — `name`, `email`
+(trimmed and lower-cased), `newPassword` (a password being chosen: `PASSWORD_MIN`) and
+`existingPassword` (a password being re-typed — login, the old password on a change, saving-plan
+confirmation: presence only, so validation never reveals the policy and bcrypt gives the verdict).
+Their messages live in `COMMON_MESSAGES.VALIDATION`. A resource schema imports these fields rather than
+restating them.
+
+Add the constant first — no message or status string belongs in a controller, service, middleware,
+validation schema or `app.js`. What stays literal, deliberately: SQL and library error names
+(`JsonWebTokenError`). The SQL means renaming a status is more than a `status.js` edit: the check
+constraints in `migrations/`, `dashboard.repository.js` (`'active'`, `'withdrawn'`, `'pending'`),
+`savingPlans.repository.js` (`addDeposit`'s `'active'` guard and `'completed'`) and
+`targets.repository.js` (`status='completed'`) all spell the values too.
+
 **Budget** — `src/utils/budget.js` is the single source of truth for salary → spendable budget
 (`weeklySaving * 4 + monthlySaving`, divided over 26 working days/month, 6/week — Friday excluded).
 Both the dashboard and the Extra Saving feature call it; never recompute a budget inline.
@@ -88,10 +115,13 @@ the client as a generic 500; `asDateTakenError` in `expenseRecords.service.js` t
 both the create and update paths. Tests must not reuse a date — `nextExpenseDate()` in
 `tests/helpers/expenseRecord.helper.js` hands out a fresh day outside the seeded range.
 
-**Expense types** — an expense type's `total` is frozen after creation, because `expense_records`
-snapshot it at creation time; `PUT /expense-types/:id` recomputes the total from the submitted
-categories and rejects the update with a 400 unless it still equals the stored total (compared as
-integer cents). `PATCH /expense-types/:id/status` flips `is_active`, and `expenseRecords.service.js`
+**Expense types** — `active` / `inactive` (and `all`, a filter value only) live in
+`src/constants/status.js` with every other status vocabulary, and `expenseTypeStatusOf(is_active)` there
+is the one bridge from the boolean column to those words; the `?status=` filter, the error listing the
+allowed values and `EXPENSE_TYPE_MESSAGES.STATUS_CHANGED` all read from it. An expense type's `total` is
+frozen after creation, because `expense_records` snapshot it at creation time; `PUT /expense-types/:id`
+recomputes the total from the submitted categories and rejects the update with a 400 unless it still
+equals the stored total (compared as integer cents). `PATCH /expense-types/:id/status` flips `is_active`, and `expenseRecords.service.js`
 refuses to create or re-point a record onto an inactive type. `GET /expense-types` returns everything
 unless `?status=active|inactive` narrows it.
 
@@ -108,6 +138,13 @@ instead. It returning no row is ambiguous by design — the service calls `findB
 answer 404 for "not yours / not there" and 409 for "still in use".
 
 **Saving plans** — status is `active → completed → withdrawn` (migration 013 retired `cancelled`).
+Those three values are spelled once, in `src/constants/status.js`; the Zod enum, the service rules and
+the per-status response messages (`SAVING_PLAN_MESSAGES.STATUS_CHANGED`, one line per status, keyed by
+the stored value) all read from it, so adding a status is a check-constraint change, a line in each
+map and the repository SQL listed above rather than a string hunt. The status controller indexes
+`STATUS_CHANGED` with no fallback, on purpose: `messages.js` checks at import that every saving-plan
+and expense-type status has its line and throws otherwise, so a missing one stops the app from
+starting rather than answering with no message.
 `assertStatusTransition` in `savingPlans.service.js` owns the rules: completed may reopen to active
 only while `currently_deposited < deposit_amount`, only completed can become withdrawn, and withdrawn is
 final. Deposits are capped at `deposit_amount`: the service answers 400 with the remaining figure, and

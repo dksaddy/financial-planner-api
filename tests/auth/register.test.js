@@ -66,5 +66,12 @@ describe("POST /api/auth/register", () => {
     expect(response.status).toBe(400);
 
     expect(response.body.success).toBe(false);
+
+    const messages = Object.fromEntries(
+      response.body.errors.map(({ field, message }) => [field, message])
+    );
+
+    expect(messages.name).toBe("Name must be at least 2 characters");
+    expect(messages.password).toBe("Password must be at least 8 characters");
   });
 });

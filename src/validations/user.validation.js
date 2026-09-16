@@ -1,35 +1,34 @@
 import { z } from "zod";
 
+import { USER_MESSAGES } from "../constants/messages.js";
+import {
+  email,
+  existingPassword,
+  name,
+  newPassword,
+} from "./fields.js";
+
+const { VALIDATION } = USER_MESSAGES;
+
 export const updateProfileSchema = z
   .object({
-    name: z
-      .string()
-      .trim()
-      .min(2, "Name must be at least 2 characters.")
-      .max(100, "Name cannot exceed 100 characters.")
-      .optional(),
+    name: name.optional(),
 
-    email: z
-      .email("Invalid email address.")
-      .optional(),
+    email: email.optional(),
 
     salary: z
       .number()
-      .min(0, "Salary cannot be negative.")
+      .min(0, VALIDATION.SALARY_NEGATIVE)
       .optional(),
 
     avatar_url: z
       .string()
-      .url("Invalid avatar URL.")
+      .url(VALIDATION.AVATAR_URL_INVALID)
       .optional(),
   })
-  .refine(
-    (data) => Object.keys(data).length > 0,
-    {
-      message: "At least one field is required.",
-    }
-  );
-
+  .refine((data) => Object.keys(data).length > 0, {
+    message: VALIDATION.NOTHING_TO_UPDATE,
+  });
 
 // Only a bare file name — the service prefixes the user's folder itself, so a
 // name that could climb out of it is refused here before it reaches storage.
@@ -37,33 +36,29 @@ export const selectAvatarSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, "Photo is required.")
+    .min(1, VALIDATION.PHOTO_REQUIRED)
     .refine(
       (value) =>
         !value.includes("/") &&
         !value.includes("\\") &&
         !value.includes(".."),
-      { message: "Invalid photo." }
+      { message: USER_MESSAGES.AVATAR_INVALID }
     ),
 });
 
-export const changePasswordSchema = z.object({
-  oldPassword: z
-    .string()
-    .min(8, "Old password must be at least 8 characters"),
+// The old password is re-typed, so presence only; the service's bcrypt check
+// is the verdict. The confirmation only has to match the new one.
+export const changePasswordSchema = z
+  .object({
+    oldPassword: existingPassword,
 
-  newPassword: z
-    .string()
-    .min(8, "New password must be at least 8 characters"),
+    newPassword,
 
-  confirmPassword: z
-    .string()
-    .min(8)
-}).refine(
-  (data) => data.newPassword === data.confirmPassword,
-  {
-    message: "Passwords do not match",
+    confirmPassword: z
+      .string()
+      .min(1, VALIDATION.CONFIRM_PASSWORD_REQUIRED),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: VALIDATION.PASSWORDS_DIFFER,
     path: ["confirmPassword"],
-  }
-);
-
+  });

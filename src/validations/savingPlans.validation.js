@@ -1,65 +1,64 @@
 import { z } from "zod";
 
+import { SAVING_PLAN_MESSAGES } from "../constants/messages.js";
+import { SAVING_PLAN_STATUSES } from "../constants/status.js";
+import { existingPassword, name } from "./fields.js";
+
+const { VALIDATION } = SAVING_PLAN_MESSAGES;
+
 // Every saving-plan mutation is confirmed with the account password, so each
-// schema below carries this field.
-//
-// Only presence is checked, never length or shape: this is an existing
-// password being re-typed, not a new one being chosen. Applying the register
-// schema's rules here would reject a valid older password and would tell an
-// attacker the policy before they ever guess. The real verdict is bcrypt's,
-// in `assertPassword`.
-const confirmationPassword = z
-  .string()
-  .min(1, "Password is required");
+// schema below carries it — checked for presence only, the verdict is
+// `assertPassword`'s.
+const password = existingPassword;
 
 export const createSavingPlanSchema = z.object({
-  name: z
-    .string()
-    .min(3, "Name must be at least 3 characters")
-    .max(100, "Name cannot exceed 100 characters"),
+  name,
 
-  amount: z.number().positive("Amount must be greater than 0"),
+  amount: z.number().positive(VALIDATION.AMOUNT_POSITIVE),
 
   frequency: z
     .number()
-    .int()
-    .positive("Frequency must be greater than 0"),
+    .int(VALIDATION.FREQUENCY_INTEGER)
+    .positive(VALIDATION.FREQUENCY_POSITIVE),
 
   months: z
     .number()
-    .int()
-    .positive("Months must be greater than 0"),
+    .int(VALIDATION.MONTHS_INTEGER)
+    .positive(VALIDATION.MONTHS_POSITIVE),
 
-  depositAmount: z.number().min(0),
+  depositAmount: z
+    .number()
+    .min(0, VALIDATION.DEPOSIT_TARGET_NEGATIVE),
 
   depositFrequency: z
     .number()
-    .int()
-    .positive("Deposit frequency must be greater than 0"),
+    .int(VALIDATION.DEPOSIT_FREQUENCY_INTEGER)
+    .positive(VALIDATION.DEPOSIT_FREQUENCY_POSITIVE),
 
-  withdrawalAmount: z.number().min(0),
+  withdrawalAmount: z
+    .number()
+    .min(0, VALIDATION.WITHDRAWAL_AMOUNT_NEGATIVE),
 
-  password: confirmationPassword,
+  password,
 });
 
 export const depositSavingPlanSchema = z.object({
-  amount: z.number().positive("Deposit amount must be greater than 0"),
+  amount: z.number().positive(VALIDATION.DEPOSIT_AMOUNT_POSITIVE),
 
-  password: confirmationPassword,
+  password,
 });
 
 // DELETE carries a body for the confirmation, which is why it now validates
 // at all. Clients must send it as a JSON body (axios: `delete(url, { data })`).
 export const deleteSavingPlanSchema = z.object({
-  password: confirmationPassword,
+  password,
 });
 
-// The three values the saving_plans.status check constraint allows. Which
-// moves between them are legal is a service rule, not a schema one.
+// Which moves between the statuses are legal is a service rule, not a schema one.
 export const updateSavingPlanStatusSchema = z.object({
-  status: z.enum(["active", "completed", "withdrawn"], {
-    error: "Status must be active, completed or withdrawn",
+  status: z.enum(SAVING_PLAN_STATUSES, {
+    error: VALIDATION.STATUS_INVALID,
   }),
 
-  password: confirmationPassword,
+  password,
 });

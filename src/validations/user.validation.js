@@ -2,6 +2,12 @@ import { z } from "zod";
 
 import { USER_MESSAGES } from "../constants/messages.js";
 import {
+  WORKING_DAYS_PER_MONTH_MAX,
+  WORKING_DAYS_PER_MONTH_MIN,
+  WORKING_DAYS_PER_WEEK_MAX,
+  WORKING_DAYS_PER_WEEK_MIN,
+} from "../constants/limits.js";
+import {
   email,
   existingPassword,
   name,
@@ -19,6 +25,44 @@ export const updateProfileSchema = z
     salary: z
       .number()
       .min(0, VALIDATION.SALARY_NEGATIVE)
+      .optional(),
+
+    working_days_per_month: z
+      .number()
+      .int(VALIDATION.WORKING_DAYS_PER_MONTH_INTEGER)
+      .min(
+        WORKING_DAYS_PER_MONTH_MIN,
+        VALIDATION.WORKING_DAYS_PER_MONTH_RANGE(
+          WORKING_DAYS_PER_MONTH_MIN,
+          WORKING_DAYS_PER_MONTH_MAX
+        )
+      )
+      .max(
+        WORKING_DAYS_PER_MONTH_MAX,
+        VALIDATION.WORKING_DAYS_PER_MONTH_RANGE(
+          WORKING_DAYS_PER_MONTH_MIN,
+          WORKING_DAYS_PER_MONTH_MAX
+        )
+      )
+      .optional(),
+
+    working_days_per_week: z
+      .number()
+      .int(VALIDATION.WORKING_DAYS_PER_WEEK_INTEGER)
+      .min(
+        WORKING_DAYS_PER_WEEK_MIN,
+        VALIDATION.WORKING_DAYS_PER_WEEK_RANGE(
+          WORKING_DAYS_PER_WEEK_MIN,
+          WORKING_DAYS_PER_WEEK_MAX
+        )
+      )
+      .max(
+        WORKING_DAYS_PER_WEEK_MAX,
+        VALIDATION.WORKING_DAYS_PER_WEEK_RANGE(
+          WORKING_DAYS_PER_WEEK_MIN,
+          WORKING_DAYS_PER_WEEK_MAX
+        )
+      )
       .optional(),
 
     avatar_url: z

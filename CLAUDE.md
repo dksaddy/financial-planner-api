@@ -93,9 +93,18 @@ constraints in `migrations/`, `dashboard.repository.js` (`'active'`, `'withdrawn
 `savingPlans.repository.js` (`addDeposit`'s `'active'` guard and `'completed'`) and
 `targets.repository.js` (`status='completed'`) all spell the values too.
 
-**Budget** — `src/utils/budget.js` is the single source of truth for salary → spendable budget
-(`weeklySaving * 4 + monthlySaving`, divided over 26 working days/month, 6/week — Friday excluded).
-Both the dashboard and the Extra Saving feature call it; never recompute a budget inline.
+**Budget** — `src/utils/budget.js` is the single source of truth for salary → spendable budget:
+`salary - (weeklySaving * 4 + monthlySaving)`, divided by the user's `working_days_per_month` for the
+daily budget and multiplied by `working_days_per_week` for the weekly one. Both are per-user columns
+(migration 014, default 26 and 6), edited through `PUT /users/profile`, bounded by `limits.js` and the
+table's check constraints, and a week may not hold more days than its month —
+`assertWorkingDaysFit` in `user.service.js` checks that against the stored figure, since an update may
+send only one. `getDashboardSummary` reads them alongside salary, and the dashboard echoes them in
+`spending`. Both the dashboard and the Extra Saving feature call `calculateBudget`; never recompute a
+budget inline, and never pass a literal day count.
+
+Changing working days, like changing salary, does not rewrite stored `daily_extra_savings` rows: each
+keeps the budget it was written with, and new figures apply from the next expense-record mutation.
 
 **Extra Saving** — `daily_extra_savings` rows are a *derived cache*, written only on expense-record
 mutation. `expenseRecords.service.js` calls `extraSavingsService.recalculateDayExtraSaving(userId, date)`

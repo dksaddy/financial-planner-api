@@ -45,6 +45,8 @@ const createSession = (user) => {
       name: user.name,
       email: user.email,
       salary: user.salary,
+      working_days_per_month: user.working_days_per_month,
+      working_days_per_week: user.working_days_per_week,
       avatar_url: user.avatar_url,
     },
   };

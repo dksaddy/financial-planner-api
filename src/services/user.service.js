@@ -9,6 +9,34 @@ import {
 } from "../constants/messages.js";
 import bcrypt from "bcrypt";
 
+// A week cannot hold more working days than its month. The update may carry
+// only one of the two, so the other side is the stored figure. The users
+// table's check constraint repeats the rule; this answers 400 instead of the
+// 500 a violated constraint would reach the client as.
+const assertWorkingDaysFit = async (userId, body) => {
+  if (
+    body.working_days_per_month === undefined &&
+    body.working_days_per_week === undefined
+  ) {
+    return;
+  }
+
+  const user = await userRepository.findById(userId);
+
+  const perMonth =
+    body.working_days_per_month ?? user.working_days_per_month;
+
+  const perWeek =
+    body.working_days_per_week ?? user.working_days_per_week;
+
+  if (perWeek > perMonth) {
+    throw new AppError(
+      USER_MESSAGES.WORKING_DAYS_WEEK_EXCEEDS_MONTH,
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+};
+
 export const updateProfile = async (
   userId,
   body
@@ -26,6 +54,8 @@ export const updateProfile = async (
       HTTP_STATUS.CONFLICT
     );
   }
+
+  await assertWorkingDaysFit(userId, body);
 
   return userRepository.updateProfile(
     userId,

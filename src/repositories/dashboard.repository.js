@@ -4,6 +4,8 @@ export const getDashboardSummary = async (userId) => {
   const sql = `
     SELECT
       u.salary,
+      u.working_days_per_month,
+      u.working_days_per_week,
 
       -- Summary totals count active and completed plans. Withdrawn plans
       -- are paid out and finished, so they live only on the saving plans
@@ -52,7 +54,7 @@ export const getDashboardSummary = async (userId) => {
 
     WHERE u.id = $1
 
-    GROUP BY u.salary;
+    GROUP BY u.id;
   `;
 
   const { rows } = await query(sql, [userId]);

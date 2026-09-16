@@ -37,6 +37,10 @@ export const getDashboardData = async (userId) => {
 
   const monthlySaving = Number(summary.monthly_saving);
 
+  const workingDaysPerMonth = Number(summary.working_days_per_month);
+
+  const workingDaysPerWeek = Number(summary.working_days_per_week);
+
   const profit = totalWithdrawal - totalDeposit;
 
   const savingPlanProgress = savingPlans.map((plan) => {
@@ -82,6 +86,8 @@ export const getDashboardData = async (userId) => {
     salary,
     weeklySaving,
     monthlySaving,
+    workingDaysPerMonth,
+    workingDaysPerWeek,
   });
 
   // ============================
@@ -244,6 +250,10 @@ export const getDashboardData = async (userId) => {
       monthly: Number(monthlySpending.toFixed(2)),
       weekly: Number(weeklySpending.toFixed(2)),
       daily: Number(dailySpending.toFixed(2)),
+      // What monthly was divided by and daily multiplied by, so the client can
+      // show the working days behind the figures.
+      workingDaysPerMonth,
+      workingDaysPerWeek,
     },
 
     extraSaving,

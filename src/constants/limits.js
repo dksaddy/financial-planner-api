@@ -19,3 +19,11 @@ export const PASSWORD_MIN = 8;
 export const PAGE_MIN = 1;
 export const LIMIT_MIN = 1;
 export const LIMIT_MAX = 100;
+
+// Days a user spreads their spending over. A week cannot hold more working
+// days than the month it sits in. The users table's check constraints repeat
+// these bounds (migration 014).
+export const WORKING_DAYS_PER_MONTH_MIN = 1;
+export const WORKING_DAYS_PER_MONTH_MAX = 31;
+export const WORKING_DAYS_PER_WEEK_MIN = 1;
+export const WORKING_DAYS_PER_WEEK_MAX = 7;

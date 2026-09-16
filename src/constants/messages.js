@@ -69,6 +69,14 @@ export const AUTH_MESSAGES = {
 export const USER_MESSAGES = {
   VALIDATION: {
     SALARY_NEGATIVE: "Salary cannot be negative",
+    WORKING_DAYS_PER_MONTH_INTEGER:
+      "Working days per month must be a whole number",
+    WORKING_DAYS_PER_MONTH_RANGE: (min, max) =>
+      `Working days per month must be between ${min} and ${max}`,
+    WORKING_DAYS_PER_WEEK_INTEGER:
+      "Working days per week must be a whole number",
+    WORKING_DAYS_PER_WEEK_RANGE: (min, max) =>
+      `Working days per week must be between ${min} and ${max}`,
     AVATAR_URL_INVALID: "Invalid avatar URL",
     NOTHING_TO_UPDATE: "At least one field is required",
 
@@ -99,6 +107,11 @@ export const USER_MESSAGES = {
     "This is your current profile picture. Upload a new photo before deleting it",
 
   OLD_PASSWORD_INCORRECT: "Old password is incorrect",
+
+  // Checked in the service against the stored figure too, since a profile
+  // update may carry only one of the two.
+  WORKING_DAYS_WEEK_EXCEEDS_MONTH:
+    "Working days per week cannot exceed working days per month",
 };
 
 export const DASHBOARD_MESSAGES = {

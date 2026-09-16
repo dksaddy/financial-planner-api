@@ -16,7 +16,15 @@ export const create = async ({ name, email, password }) => {
     `
     INSERT INTO users (name, email, password)
     VALUES ($1, $2, $3)
-    RETURNING id, name, email, salary, avatar_url, created_at
+    RETURNING
+      id,
+      name,
+      email,
+      salary,
+      working_days_per_month,
+      working_days_per_week,
+      avatar_url,
+      created_at
     `,
     [name, email, password]
   );
@@ -32,6 +40,8 @@ export const findById = async (id) => {
       name,
       email,
       salary,
+      working_days_per_month,
+      working_days_per_week,
       avatar_url,
       created_at,
       updated_at
@@ -65,6 +75,16 @@ export const updateProfile = async (id, data) => {
     values.push(data.salary);
   }
 
+  if (data.working_days_per_month !== undefined) {
+    updates.push(`working_days_per_month = $${index++}`);
+    values.push(data.working_days_per_month);
+  }
+
+  if (data.working_days_per_week !== undefined) {
+    updates.push(`working_days_per_week = $${index++}`);
+    values.push(data.working_days_per_week);
+  }
+
   if (data.avatar_url !== undefined) {
     updates.push(`avatar_url = $${index++}`);
     values.push(data.avatar_url);
@@ -84,6 +104,8 @@ export const updateProfile = async (id, data) => {
       name,
       email,
       salary,
+      working_days_per_month,
+      working_days_per_week,
       avatar_url,
       created_at,
       updated_at
@@ -125,6 +147,8 @@ export const updateAvatar = async (id, avatarUrl) => {
       name,
       email,
       salary,
+      working_days_per_month,
+      working_days_per_week,
       avatar_url,
       created_at,
       updated_at

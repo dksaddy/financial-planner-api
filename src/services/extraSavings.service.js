@@ -35,6 +35,8 @@ export const recalculateDayExtraSaving = async (
     salary: Number(summary.salary),
     weeklySaving: Number(summary.weekly_saving),
     monthlySaving: Number(summary.monthly_saving),
+    workingDaysPerMonth: Number(summary.working_days_per_month),
+    workingDaysPerWeek: Number(summary.working_days_per_week),
   });
 
   return await dailyExtraSavingsRepository.upsertForDate(

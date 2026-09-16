@@ -1,18 +1,18 @@
-// Working days per month used across the app's spending calculations
-// (Saturday-Thursday, Friday excluded) — matches dashboard.service.js.
-const WORKING_DAYS_PER_MONTH = 26;
-const WORKING_DAYS_PER_WEEK = 6;
-
 /**
- * Calculates a user's spending budget from their salary and active
- * saving commitments. This is the single source of truth for
- * "how much am I allowed to spend" — used by both the dashboard
- * summary and the Extra Saving feature, so they never disagree.
+ * Calculates a user's spending budget from their salary, active saving
+ * commitments and working days. This is the single source of truth for
+ * "how much am I allowed to spend" — used by both the dashboard summary and
+ * the Extra Saving feature, so they never disagree.
+ *
+ * The working days are the user's own (`users.working_days_per_month` and
+ * `users.working_days_per_week`), never a constant.
  */
 export const calculateBudget = ({
   salary,
   weeklySaving,
   monthlySaving,
+  workingDaysPerMonth,
+  workingDaysPerWeek,
 }) => {
   const totalMonthlySaving =
     weeklySaving * 4 + monthlySaving;
@@ -20,10 +20,10 @@ export const calculateBudget = ({
   const monthlySpending = salary - totalMonthlySaving;
 
   const dailyBudget =
-    monthlySpending / WORKING_DAYS_PER_MONTH;
+    monthlySpending / workingDaysPerMonth;
 
   const weeklyBudget =
-    dailyBudget * WORKING_DAYS_PER_WEEK;
+    dailyBudget * workingDaysPerWeek;
 
   return {
     totalMonthlySaving,

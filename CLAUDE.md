@@ -138,9 +138,21 @@ the denylist on every request, so token revocation is a DB round-trip, not state
 Plain SQL files in `migrations/`, applied in filename order by `scripts/migrate.js`, tracked in a
 `migrations` table. New migration = next numbered `NNN_description.sql`. There is no down-migration path.
 
-Known gotcha: `scripts/reset.js` does not drop `token_denylist` or `daily_extra_savings`, and those
-migrations use bare `create table` (no `IF NOT EXISTS`), so a second `npm run prepare:test` fails once
-those tables already exist. Drop them manually or add them to the reset list.
+`scripts/reset.js` must drop every table any migration creates. Migrations use bare `create table` with
+no `IF NOT EXISTS`, so a table left out of the reset list fails the next `npm run prepare:test` with
+`42P07 relation already exists` — which is what `token_denylist` and `daily_extra_savings` did until they
+were added to it. A new migration that creates a table needs a matching entry there.
+
+## Local setup
+
+Postgres must already have the role and database `.env.test` names — nothing in the repo creates them:
+
+```bash
+sudo -u postgres psql -c "CREATE ROLE test_user WITH LOGIN PASSWORD 'test123';"
+sudo -u postgres createdb -O test_user financial_planner_test
+```
+
+No extension is needed; `gen_random_uuid()` is built into Postgres 13+. Then `npm run test:all`.
 
 Seeded test data (`scripts/seed.js`) is what the test suite assumes: `test@example.com` and
 `other@example.com`, both `password123`, with the second user existing specifically to test cross-user

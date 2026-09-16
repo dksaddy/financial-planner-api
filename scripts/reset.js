@@ -12,6 +12,8 @@ async function reset() {
 
     await client.query(`
       DROP TABLE IF EXISTS
+        daily_extra_savings,
+        token_denylist,
         expense_records,
         expense_types,
         saving_plans,

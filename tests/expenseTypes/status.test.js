@@ -102,6 +102,14 @@ describe("DELETE /api/expense-types/:id", () => {
       .delete(`/api/expense-types/${expenseType.id}`)
       .set("Authorization", `Bearer ${token}`);
 
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(200);
+
+    // The 404 belongs to the read after the delete, not to the delete itself —
+    // the type is freshly created and unreferenced, so removing it succeeds.
+    const check = await api()
+      .get(`/api/expense-types/${expenseType.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(check.status).toBe(404);
   });
 });

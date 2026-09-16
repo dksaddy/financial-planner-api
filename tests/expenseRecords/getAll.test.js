@@ -96,17 +96,21 @@ describe("GET /api/expense-records", () => {
     ).toBe(false);
   });
 
-  it("should paginate a same-date run without repeats or gaps", async () => {
+  it("should paginate a month without repeats or gaps", async () => {
     const { token } = await login();
 
-    // Five records on one date: pagination is stable only if the ordering
-    // has a tiebreaker beyond `date`.
+    // Five records across three pages. This seeded one date five times until
+    // migration 012 gave `expense_records` unique (user_id, date) — four of
+    // those inserts answer 409 now, so a same-date run is no longer something
+    // the API can be asked to paginate. The `created_at, id` tiebreaker in the
+    // ORDER BY stays regardless; what this still covers is that paging a month
+    // yields every row exactly once.
     await seedDates(token, [
       "2030-03-04",
-      "2030-03-04",
-      "2030-03-04",
-      "2030-03-04",
-      "2030-03-04",
+      "2030-03-05",
+      "2030-03-06",
+      "2030-03-07",
+      "2030-03-08",
     ]);
 
     const first = await list(token, "?month=2030-03&limit=2&page=1");

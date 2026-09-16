@@ -1,13 +1,20 @@
+import { randomUUID } from "node:crypto";
+
 import { describe, it, expect } from "vitest";
 import { api } from "../helpers/request.helper.js";
 
 describe("POST /api/auth/register", () => {
   it("should register a new user and sign them in", async () => {
+    // A fresh address every run: a literal one survives in the database and
+    // answers 409 on the next `npm test` without a reset in between. The
+    // duplicate case below has the seeded user to assert against.
+    const email = `john-${randomUUID()}@example.com`;
+
     const response = await api()
       .post("/api/auth/register")
       .send({
         name: "John Doe",
-        email: "john@example.com",
+        email,
         password: "password123",
       });
 
@@ -19,9 +26,7 @@ describe("POST /api/auth/register", () => {
 
     expect(response.body.data.user).toHaveProperty("id");
 
-    expect(response.body.data.user.email).toBe(
-      "john@example.com"
-    );
+    expect(response.body.data.user.email).toBe(email);
 
     expect(response.body.data.user).not.toHaveProperty("password");
 
@@ -32,7 +37,7 @@ describe("POST /api/auth/register", () => {
 
     expect(me.status).toBe(200);
 
-    expect(me.body.data.email).toBe("john@example.com");
+    expect(me.body.data.email).toBe(email);
   });
 
   it("should reject duplicate email", async () => {

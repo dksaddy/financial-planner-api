@@ -1,9 +1,9 @@
-import * as savingPlansRepository from "../repositories/savingPlans.repository.js";
 import * as repository from "../repositories/savingPlans.repository.js";
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { SAVING_PLAN_MESSAGES } from "../constants/messages.js";
 import { SAVING_PLAN_STATUS } from "../constants/status.js";
+import { DEFAULT_TAX_RATE } from "../constants/limits.js";
 import { assertPassword } from "./auth.service.js";
 
 // Saving plans are the one resource where every mutation is confirmed with the
@@ -18,7 +18,10 @@ import { assertPassword } from "./auth.service.js";
 export const createSavingPlan = async (userId, data) => {
   await assertPassword(userId, data.password);
 
-  return await savingPlansRepository.create(userId, data);
+  return await repository.create(userId, {
+    ...data,
+    taxRate: data.taxRate ?? DEFAULT_TAX_RATE,
+  });
 };
 
 export const getAllSavingPlans = async (userId) => {
@@ -44,7 +47,12 @@ export const updateSavingPlan = async (id, userId, data) => {
     throw new AppError(SAVING_PLAN_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
-  return await repository.update(id, userId, data);
+  // An update that leaves the rate out keeps the stored one rather than
+  // falling back to the default.
+  return await repository.update(id, userId, {
+    ...data,
+    taxRate: data.taxRate ?? existing.tax_rate,
+  });
 };
 
 // Money is compared in integer cents: numeric columns arrive as strings and

@@ -141,6 +141,8 @@ export const SAVING_PLAN_MESSAGES = {
     DEPOSIT_TARGET_NEGATIVE: "Deposit amount cannot be negative",
     WITHDRAWAL_AMOUNT_NEGATIVE: "Withdrawal amount cannot be negative",
     DEPOSIT_AMOUNT_POSITIVE: "Deposit amount must be greater than 0",
+    TAX_RATE_RANGE: (min, max) =>
+      `Tax rate must be between ${min} and ${max}`,
 
     // Spelled out from SAVING_PLAN_STATUSES rather than typed again, so adding
     // a status cannot leave the error naming only the old ones.

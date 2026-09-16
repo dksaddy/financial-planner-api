@@ -12,11 +12,12 @@ export const create = async (userId, data) => {
       months,
       deposit_amount,
       deposit_frequency,
-      withdrawal_amount
+      withdrawal_amount,
+      tax_rate
     )
     VALUES
     (
-      $1,$2,$3,$4,$5,$6,$7,$8
+      $1,$2,$3,$4,$5,$6,$7,$8,$9
     )
     RETURNING *;
     `,
@@ -29,6 +30,7 @@ export const create = async (userId, data) => {
       data.depositAmount,
       data.depositFrequency,
       data.withdrawalAmount,
+      data.taxRate,
     ]
   );
 
@@ -75,6 +77,7 @@ export const update = async (id, userId, data) => {
       deposit_amount = $7,
       deposit_frequency = $8,
       withdrawal_amount = $9,
+      tax_rate = $10,
       updated_at = NOW()
     WHERE id = $1
       AND user_id = $2
@@ -90,6 +93,7 @@ export const update = async (id, userId, data) => {
       data.depositAmount,
       data.depositFrequency,
       data.withdrawalAmount,
+      data.taxRate,
     ]
   );
 

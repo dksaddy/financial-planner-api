@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { SAVING_PLAN_MESSAGES } from "../constants/messages.js";
 import { SAVING_PLAN_STATUSES } from "../constants/status.js";
+import { TAX_RATE_MAX, TAX_RATE_MIN } from "../constants/limits.js";
 import { existingPassword, name } from "./fields.js";
 
 const { VALIDATION } = SAVING_PLAN_MESSAGES;
@@ -38,6 +39,14 @@ export const createSavingPlanSchema = z.object({
   withdrawalAmount: z
     .number()
     .min(0, VALIDATION.WITHDRAWAL_AMOUNT_NEGATIVE),
+
+  // A percent. Optional so a client that predates it still works: a new plan
+  // takes DEFAULT_TAX_RATE, and an update keeps the stored rate.
+  taxRate: z
+    .number()
+    .min(TAX_RATE_MIN, VALIDATION.TAX_RATE_RANGE(TAX_RATE_MIN, TAX_RATE_MAX))
+    .max(TAX_RATE_MAX, VALIDATION.TAX_RATE_RANGE(TAX_RATE_MIN, TAX_RATE_MAX))
+    .optional(),
 
   password,
 });

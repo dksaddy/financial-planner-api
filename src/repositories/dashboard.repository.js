@@ -74,6 +74,7 @@ export const getSavingPlans = async (userId) => {
       deposit_frequency,
       currently_deposited,
       withdrawal_amount,
+      tax_rate,
       status,
       created_at
     FROM saving_plans

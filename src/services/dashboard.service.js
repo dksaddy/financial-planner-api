@@ -2,6 +2,7 @@ import * as repository from "../repositories/dashboard.repository.js";
 import * as dailyExtraSavingsRepository from "../repositories/dailyExtraSavings.repository.js";
 import * as extraSavingsService from "./extraSavings.service.js";
 import { calculateBudget } from "../utils/budget.js";
+import { calculateProfit } from "../utils/savingPlan.js";
 import { toDateString } from "../utils/date.js";
 
 export const getDashboardData = async (userId) => {
@@ -46,6 +47,8 @@ export const getDashboardData = async (userId) => {
   const savingPlanProgress = savingPlans.map((plan) => {
     const depositAmount = Number(plan.deposit_amount);
     const currentlyDeposited = Number(plan.currently_deposited);
+    const withdrawalAmount = Number(plan.withdrawal_amount);
+    const taxRate = Number(plan.tax_rate);
     const remaining = Math.max(depositAmount - currentlyDeposited, 0);
 
     const percentage =
@@ -63,10 +66,9 @@ export const getDashboardData = async (userId) => {
       depositAmount,
       depositFrequency: Number(plan.deposit_frequency),
       currentlyDeposited,
-      withdrawalAmount: Number(plan.withdrawal_amount),
-      profit: Number(
-        (Number(plan.withdrawal_amount) - depositAmount).toFixed(2)
-      ),
+      withdrawalAmount,
+      taxRate,
+      ...calculateProfit({ depositAmount, withdrawalAmount, taxRate }),
       remaining: Number(remaining.toFixed(2)),
       percentage: Number(percentage.toFixed(2)),
       createdAt: plan.created_at,

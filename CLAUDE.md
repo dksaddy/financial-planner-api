@@ -164,6 +164,14 @@ totals (deposit, withdrawal, profit) count active and completed plans and leave 
 everything else — the weekly/monthly saving that feeds `calculateBudget` (Spending, Progress, Saving
 Breakdown, stored daily budgets) and the Overview and Savings plan lists — counts active plans only.
 
+Each plan carries its own `tax_rate`, a percent (migration 015, default 15, bounded 0–100 in
+`limits.js` and the check constraint). `utils/savingPlan.js` `calculateProfit` is the one place profit,
+tax, in-hand and net profit are worked out: profit is `withdrawal_amount - deposit_amount`, tax is
+charged only on a gain, per plan, so one plan's loss never offsets another's tax, and in hand is the
+withdrawal less that tax. The dashboard returns `taxRate`, `tax`, `inHand` and `netProfit` on every
+plan; `GET /saving-plans` returns raw rows and the web's `normalizeSavingPlan` mirrors the maths. `taxRate` is optional on create (takes `DEFAULT_TAX_RATE`) and
+on update (keeps the stored rate), and editable in any status like every other plan field.
+
 **Uploads** — `upload.middleware.js` accepts JPG/PNG/WEBP/GIF up to 5MB into memory, and
 `utils/image.js` `compressImage()` shrinks a file before it reaches Supabase: capped at 1024px on the
 long edge and re-encoded as WebP q70, which puts a phone photo under 100KB. It returns the extension

@@ -1,26 +1,11 @@
-import { randomUUID } from "node:crypto";
-
 import { describe, it, expect } from "vitest";
 import { api } from "../helpers/request.helper.js";
+import { registerFreshUser } from "../helpers/auth.helper.js";
 import { createExpenseRecord } from "../helpers/expenseRecord.helper.js";
 
 // Every case registers its own user: working days feed the budget behind
 // user-global figures, so changing the seeded user's would move numbers other
 // test files assert on.
-const registerFreshUser = async () => {
-  const response = await api()
-    .post("/api/auth/register")
-    .send({
-      name: "Working Days",
-      email: `working-days-${randomUUID()}@example.com`,
-      password: "password123",
-    });
-
-  return {
-    token: response.body.data.token,
-    user: response.body.data.user,
-  };
-};
 
 const updateProfile = (token, body) =>
   api()

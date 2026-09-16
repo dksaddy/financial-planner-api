@@ -27,3 +27,10 @@ export const WORKING_DAYS_PER_MONTH_MIN = 1;
 export const WORKING_DAYS_PER_MONTH_MAX = 31;
 export const WORKING_DAYS_PER_WEEK_MIN = 1;
 export const WORKING_DAYS_PER_WEEK_MAX = 7;
+
+// A saving plan's tax on profit, as a percent. The default applies when a new
+// plan is created without one, and is the saving_plans column default too
+// (migration 015).
+export const TAX_RATE_MIN = 0;
+export const TAX_RATE_MAX = 100;
+export const DEFAULT_TAX_RATE = 15;

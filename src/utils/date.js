@@ -20,6 +20,22 @@ export const toDateString = (value) => {
 };
 
 /**
+ * Today's calendar date in an IANA time zone, as "YYYY-MM-DD".
+ *
+ * The server's own clock says nothing about the user's day: a user in
+ * Asia/Dhaka is already on tomorrow for the last six hours of a UTC day. The
+ * `en-CA` locale formats as year-month-day, which is the shape every date in
+ * the app is compared in.
+ */
+export const todayIn = (timeZone, now = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+
+/**
  * The Saturday-to-Friday week a date falls in, as a half-open
  * ["YYYY-MM-DD", "YYYY-MM-DD") range.
  *

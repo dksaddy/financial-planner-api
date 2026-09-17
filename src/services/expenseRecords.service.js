@@ -2,8 +2,7 @@ import * as repository from "../repositories/expenseRecords.repository.js";
 import * as expenseTypeRepository from "../repositories/expenseTypes.repository.js";
 import * as dailyExtraSavingsRepository from "../repositories/dailyExtraSavings.repository.js";
 import * as extraSavingsService from "./extraSavings.service.js";
-import * as userRepository from "../repositories/user.repository.js";
-import { toDateString, weekRange } from "../utils/date.js";
+import { todayIn, toDateString, weekRange } from "../utils/date.js";
 
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
@@ -35,20 +34,11 @@ const asDateTakenError = (error) => {
 };
 
 // An expense record says what was spent, so it cannot be dated ahead of the
-// day it is written on.
-//
-// The bound is tomorrow, not today, and the extra day is deliberate: the
-// client sends the date from the user's own clock, and the server has no idea
-// what zone that clock is in. A user six hours ahead of the server is a day
-// ahead of it for the first six hours of every day, and a strict comparison
-// would refuse them today's record every morning. The web caps its date field
-// at the user's own today, which is the clock that can actually tell.
-const assertNotFuture = (date) => {
-  const limit = new Date();
-
-  limit.setDate(limit.getDate() + 1);
-
-  if (toDateString(date) > toDateString(limit)) {
+// day it is written on — the user's day, read in their own `time_zone`, not
+// the server's. The web reports the browser's zone to the profile, which is
+// what makes a strict comparison safe for a user far from the server.
+const assertNotFuture = (date, timeZone) => {
+  if (toDateString(date) > todayIn(timeZone)) {
     throw new AppError(
       EXPENSE_RECORD_MESSAGES.DATE_IN_FUTURE,
       HTTP_STATUS.BAD_REQUEST
@@ -68,8 +58,8 @@ const assertNotFuture = (date) => {
 // Two creates racing can both pass this and leave the week one over. The
 // check would have to be part of the insert to close that, which means the
 // day count in SQL, and one extra record in a week is not worth it.
-const assertWeekHasRoom = async (userId, date, excludeId) => {
-  const user = await userRepository.findById(userId);
+const assertWeekHasRoom = async (user, date, excludeId) => {
+  const userId = user.id;
 
   const [start, end] = weekRange(date);
 
@@ -112,15 +102,19 @@ const loadActiveExpenseType = async (expenseTypeId, userId) => {
   return expenseType;
 };
 
-export const createExpenseRecord = async (userId, data) => {
+// `user` is `req.user` — it carries the time zone and working days the rules
+// below read, so they cost no extra query.
+export const createExpenseRecord = async (user, data) => {
+  const userId = user.id;
+
   const expenseType = await loadActiveExpenseType(
     data.expense_type_id,
     userId
   );
 
-  assertNotFuture(data.date);
+  assertNotFuture(data.date, user.time_zone);
 
-  await assertWeekHasRoom(userId, data.date);
+  await assertWeekHasRoom(user, data.date);
 
   let record;
 
@@ -229,9 +223,11 @@ export const getExpenseRecordById = async (id, userId) => {
 
 export const updateExpenseRecord = async (
   id,
-  userId,
+  user,
   data
 ) => {
+  const userId = user.id;
+
   const existing = await repository.findById(id, userId);
 
   if (!existing) {
@@ -246,11 +242,11 @@ export const updateExpenseRecord = async (
     userId
   );
 
-  assertNotFuture(data.date);
+  assertNotFuture(data.date, user.time_zone);
 
   // Checked against the week the record is moving to, which is its own week
   // when only the type or the day changed.
-  await assertWeekHasRoom(userId, data.date, id);
+  await assertWeekHasRoom(user, data.date, id);
 
   let record;
 

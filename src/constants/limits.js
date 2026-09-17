@@ -28,6 +28,10 @@ export const WORKING_DAYS_PER_MONTH_MAX = 31;
 export const WORKING_DAYS_PER_WEEK_MIN = 1;
 export const WORKING_DAYS_PER_WEEK_MAX = 7;
 
+// `users.time_zone` is varchar(64) (migration 016). The longest IANA name is
+// well under that.
+export const TIME_ZONE_MAX = 64;
+
 // A saving plan's tax on profit, as a percent. The default applies when a new
 // plan is created without one, and is the saving_plans column default too
 // (migration 015).

@@ -86,6 +86,10 @@ export const USER_MESSAGES = {
     // confirmation needs a line of its own.
     CONFIRM_PASSWORD_REQUIRED: "Confirm password is required",
     PASSWORDS_DIFFER: "Passwords do not match",
+
+    // An IANA zone name such as "Asia/Dhaka". Checked against Intl in the
+    // schema and against Postgres in the service.
+    TIME_ZONE_INVALID: "Invalid time zone",
   },
 
   PROFILE_FETCHED: "Profile fetched successfully",

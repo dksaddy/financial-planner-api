@@ -6,7 +6,12 @@ import { AUTH_MESSAGES } from "../constants/messages.js";
 import * as userRepository from "../repositories/user.repository.js";
 import * as tokenDenylistRepository from "../repositories/tokenDenylist.repository.js";
 
-export const registerUser = async ({ name, email, password }) => {
+export const registerUser = async ({
+  name,
+  email,
+  password,
+  time_zone,
+}) => {
   const existingUser = await userRepository.findByEmail(email);
 
   if (existingUser) {
@@ -16,12 +21,20 @@ export const registerUser = async ({ name, email, password }) => {
     );
   }
 
+  // A zone Postgres cannot resolve is dropped rather than refused: signing up
+  // must not fail over it, and the web reports the zone again on the profile.
+  const knownTimeZone =
+    time_zone && (await userRepository.isKnownTimeZone(time_zone))
+      ? time_zone
+      : undefined;
+
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const user = await userRepository.create({
     name,
     email,
     password: hashedPassword,
+    time_zone: knownTimeZone,
   });
 
   // Signed in straight away: the response carries the same session a login
@@ -47,6 +60,7 @@ const createSession = (user) => {
       salary: user.salary,
       working_days_per_month: user.working_days_per_month,
       working_days_per_week: user.working_days_per_week,
+      time_zone: user.time_zone,
       avatar_url: user.avatar_url,
     },
   };

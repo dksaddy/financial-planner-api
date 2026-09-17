@@ -58,6 +58,16 @@ export const updateProfile = async (
 
   await assertWorkingDaysFit(userId, body);
 
+  if (
+    body.time_zone !== undefined &&
+    !(await userRepository.isKnownTimeZone(body.time_zone))
+  ) {
+    throw new AppError(
+      USER_MESSAGES.VALIDATION.TIME_ZONE_INVALID,
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
   return userRepository.updateProfile(
     userId,
     body

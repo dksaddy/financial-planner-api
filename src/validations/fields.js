@@ -1,10 +1,14 @@
 import { z } from "zod";
 
-import { COMMON_MESSAGES } from "../constants/messages.js";
+import {
+  COMMON_MESSAGES,
+  USER_MESSAGES,
+} from "../constants/messages.js";
 import {
   NAME_MAX,
   NAME_MIN,
   PASSWORD_MIN,
+  TIME_ZONE_MAX,
 } from "../constants/limits.js";
 
 const { VALIDATION } = COMMON_MESSAGES;
@@ -41,3 +45,25 @@ export const newPassword = z
 export const existingPassword = z
   .string()
   .min(1, VALIDATION.PASSWORD_REQUIRED);
+
+const isIanaTimeZone = (value) => {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// The IANA zone the user's "today" is read in: register (optional, the
+// browser's zone) and the profile. Intl rejects a made-up zone here;
+// `user.service.js` confirms Postgres knows it too.
+export const timeZone = z
+  .string()
+  .trim()
+  .min(1, USER_MESSAGES.VALIDATION.TIME_ZONE_INVALID)
+  .max(TIME_ZONE_MAX, USER_MESSAGES.VALIDATION.TIME_ZONE_INVALID)
+  .refine(isIanaTimeZone, {
+    message: USER_MESSAGES.VALIDATION.TIME_ZONE_INVALID,
+  });

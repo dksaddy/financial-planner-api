@@ -11,11 +11,16 @@ export const findByEmail = async (email) => {
   return result.rows[0];
 };
 
-export const create = async ({ name, email, password }) => {
+export const create = async ({
+  name,
+  email,
+  password,
+  time_zone = "UTC",
+}) => {
   const result = await query(
     `
-    INSERT INTO users (name, email, password)
-    VALUES ($1, $2, $3)
+    INSERT INTO users (name, email, password, time_zone)
+    VALUES ($1, $2, $3, $4)
     RETURNING
       id,
       name,
@@ -23,10 +28,11 @@ export const create = async ({ name, email, password }) => {
       salary,
       working_days_per_month,
       working_days_per_week,
+      time_zone,
       avatar_url,
       created_at
     `,
-    [name, email, password]
+    [name, email, password, time_zone]
   );
 
   return result.rows[0];
@@ -42,6 +48,7 @@ export const findById = async (id) => {
       salary,
       working_days_per_month,
       working_days_per_week,
+      time_zone,
       avatar_url,
       created_at,
       updated_at
@@ -85,6 +92,11 @@ export const updateProfile = async (id, data) => {
     values.push(data.working_days_per_week);
   }
 
+  if (data.time_zone !== undefined) {
+    updates.push(`time_zone = $${index++}`);
+    values.push(data.time_zone);
+  }
+
   if (data.avatar_url !== undefined) {
     updates.push(`avatar_url = $${index++}`);
     values.push(data.avatar_url);
@@ -106,6 +118,7 @@ export const updateProfile = async (id, data) => {
       salary,
       working_days_per_month,
       working_days_per_week,
+      time_zone,
       avatar_url,
       created_at,
       updated_at
@@ -149,6 +162,7 @@ export const updateAvatar = async (id, avatarUrl) => {
       salary,
       working_days_per_month,
       working_days_per_week,
+      time_zone,
       avatar_url,
       created_at,
       updated_at
@@ -189,4 +203,21 @@ export const findByIdWithPassword = async (id) => {
   );
 
   return rows[0];
+};
+
+// Postgres resolves `AT TIME ZONE` against its own zone database, which is not
+// guaranteed to match the Intl data the schema checked against. A zone only
+// Intl knows would pass validation and then 500 the dashboard, so it is
+// confirmed here too.
+export const isKnownTimeZone = async (timeZone) => {
+  const { rows } = await query(
+    `
+    SELECT EXISTS (
+      SELECT 1 FROM pg_timezone_names WHERE name = $1
+    ) AS known
+    `,
+    [timeZone]
+  );
+
+  return rows[0].known;
 };

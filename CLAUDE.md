@@ -127,11 +127,12 @@ from the last so a test never fills a week (see below), and in the past, since a
 refused. The literal dates the month-filter tests assert on (2021-03 through 2023-06) sit between the
 helper's range and the seeded one, so neither adds a row the other counts.
 
-A record is also never dated ahead: `assertNotFuture` refuses one past tomorrow on create and update.
-Tomorrow, not today, because the client sends the date from the user's own clock and the server does not
-know its zone — a user six hours ahead is a day ahead for the first six hours of every day. The web caps
-its date field and its schema at the user's own today, which is the clock that can tell. This is why the
-test helpers date records in the past (see below).
+A record is also never dated ahead: `assertNotFuture` refuses one after the user's own today on create
+and update — `todayIn(user.time_zone)` from `utils/date.js`. `users.time_zone` (migration 016, IANA name,
+default `UTC`) is sent by the web on register and synced from the browser on profile load; it is checked
+against Intl in the schema and against `pg_timezone_names` in the service, because the dashboard's week
+queries resolve it in SQL (`NOW() AT TIME ZONE …` in place of `CURRENT_DATE`). This is why the test
+helpers date records in the past (see below).
 
 On top of that, a week holds only as many records as the user has `working_days_per_week`:
 `assertWeekHasRoom` in `expenseRecords.service.js` counts the Saturday-to-Friday week a record is

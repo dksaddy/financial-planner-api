@@ -12,6 +12,7 @@ import {
   existingPassword,
   name,
   newPassword,
+  timeZone,
 } from "./fields.js";
 
 const { VALIDATION } = USER_MESSAGES;
@@ -64,6 +65,8 @@ export const updateProfileSchema = z
         )
       )
       .optional(),
+
+    time_zone: timeZone.optional(),
 
     avatar_url: z
       .string()

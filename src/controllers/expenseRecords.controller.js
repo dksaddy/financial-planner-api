@@ -14,7 +14,7 @@ import {
 export const create = asyncHandler(async (req,res)=>{
 
     const record = await createExpenseRecord(
-        req.user.id,
+        req.user,
         req.body
     );
 
@@ -76,7 +76,7 @@ export const update = asyncHandler(async(req,res)=>{
 
     const record = await updateExpenseRecord(
         req.params.id,
-        req.user.id,
+        req.user,
         req.body
     );
 

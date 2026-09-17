@@ -161,21 +161,28 @@ export const getTopExpenseTypes = async (userId) => {
   return rows;
 };
 
+// "Today" in both week queries is the user's own day, read in their
+// `time_zone`, not the database server's CURRENT_DATE — otherwise the week
+// rolls over at the wrong local hour for anyone far from the server.
+const USER_TODAY = `(
+  NOW() AT TIME ZONE (SELECT time_zone FROM users WHERE id = $1)
+)::date`;
+
 export const getCurrentWeekExpenses = async (userId) => {
   const sql = `
     WITH week_range AS (
       SELECT
         (
-          CURRENT_DATE -
+          ${USER_TODAY} -
           (
             CASE
-              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 6 THEN 0
-              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 0 THEN 1
-              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 1 THEN 2
-              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 2 THEN 3
-              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 3 THEN 4
-              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 4 THEN 5
-              WHEN EXTRACT(DOW FROM CURRENT_DATE) = 5 THEN 6
+              WHEN EXTRACT(DOW FROM ${USER_TODAY}) = 6 THEN 0
+              WHEN EXTRACT(DOW FROM ${USER_TODAY}) = 0 THEN 1
+              WHEN EXTRACT(DOW FROM ${USER_TODAY}) = 1 THEN 2
+              WHEN EXTRACT(DOW FROM ${USER_TODAY}) = 2 THEN 3
+              WHEN EXTRACT(DOW FROM ${USER_TODAY}) = 3 THEN 4
+              WHEN EXTRACT(DOW FROM ${USER_TODAY}) = 4 THEN 5
+              WHEN EXTRACT(DOW FROM ${USER_TODAY}) = 5 THEN 6
             END
           ) * INTERVAL '1 day'
         )::date AS week_start
@@ -211,8 +218,8 @@ export const getLastFourWeeksExpenses = async (userId) => {
   const sql = `
     WITH current_week AS (
       SELECT (
-        CURRENT_DATE -
-        CASE EXTRACT(DOW FROM CURRENT_DATE)
+        ${USER_TODAY} -
+        CASE EXTRACT(DOW FROM ${USER_TODAY})
           WHEN 6 THEN 0 -- Saturday
           WHEN 0 THEN 1 -- Sunday
           WHEN 1 THEN 2 -- Monday

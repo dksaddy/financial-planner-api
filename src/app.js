@@ -28,6 +28,10 @@ if (env.trustProxy > 0) {
   app.set("trust proxy", env.trustProxy);
 }
 
+// First of all, so every line logged for a request — including one CORS turns
+// away before any route sees it — carries the same id.
+app.use(requestId);
+
 // Comma-separated list in CORS_ORIGIN supports multiple environments
 // (e.g. local dev + deployed frontend) without code changes.
 const allowedOrigins = (env.corsOrigin || "")
@@ -35,26 +39,42 @@ const allowedOrigins = (env.corsOrigin || "")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+// The per-request form, so a refusal can be logged with the request's own id.
+// An origin that is not on the list is refused by simply not sending the CORS
+// headers back, which is what stops the browser. Throwing instead — as this
+// did — turned a crawler, a stale deploy preview or a frontend deployed before
+// CORS_ORIGIN was updated into a 500 with a stack trace, for a request that was
+// being handled exactly as intended.
 app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow non-browser requests (curl, Postman, server-to-server)
-      // where there's no Origin header at all.
-      if (!origin) {
-        return callback(null, true);
-      }
+  cors((req, callback) => {
+    const origin = req.headers.origin;
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    // Non-browser requests (curl, Postman, server-to-server) carry no Origin
+    // header at all and are always allowed.
+    const allowed = !origin || allowedOrigins.includes(origin);
 
-      return callback(new Error(COMMON_MESSAGES.CORS_BLOCKED));
-    },
-    // So a browser client can read the id and quote it when reporting an error.
-    exposedHeaders: ["X-Request-Id"],
+    if (!allowed) {
+      console.warn(
+        JSON.stringify({
+          level: "warn",
+          type: "cors",
+          time: new Date().toISOString(),
+          requestId: req.id ?? null,
+          method: req.method,
+          url: req.originalUrl,
+          origin,
+          message: COMMON_MESSAGES.CORS_BLOCKED,
+        })
+      );
+    }
+
+    callback(null, {
+      origin: allowed,
+      // So a browser client can read the id and quote it when reporting an error.
+      exposedHeaders: ["X-Request-Id"],
+    });
   })
 );
-app.use(requestId);
 app.use(helmet());
 app.use(accessLog());
 app.use(express.json());

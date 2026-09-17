@@ -126,6 +126,40 @@ export const findMonthsByUserId = async (userId) => {
   return result.rows.map((row) => row.month);
 };
 
+// How many records the user already has in one Saturday-to-Friday week. The
+// range is half-open, matching `weekRange` in `utils/date.js`. `excludeId` is
+// the record being updated, which must not count itself when its own week is
+// checked.
+export const countInWeek = async (
+  userId,
+  { start, end, excludeId }
+) => {
+  const params = [userId, start, end];
+
+  let filter = "";
+
+  if (excludeId) {
+    params.push(excludeId);
+
+    filter = `AND id <> $${params.length}`;
+  }
+
+  const result = await query(
+    `
+    SELECT COUNT(*)::int AS count
+    FROM expense_records
+    WHERE
+        user_id = $1
+        AND date >= $2
+        AND date < $3
+        ${filter};
+    `,
+    params
+  );
+
+  return result.rows[0].count;
+};
+
 export const findById = async (id, userId) => {
   const result = await query(
     `

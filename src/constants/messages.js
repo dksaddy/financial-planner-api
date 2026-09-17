@@ -266,6 +266,10 @@ export const EXPENSE_RECORD_MESSAGES = {
   // Spending is recorded, not planned: a record is dated today or earlier.
   DATE_IN_FUTURE: "An expense record cannot be dated in the future",
 
+  // A week holds as many records as the user has working days in one — see
+  // `working_days_per_week` on the profile.
+  WEEK_FULL: (days) =>
+    `That week already has ${days} expense records, one for each of your ${days} working days`,
 };
 
 export const TARGET_MESSAGES = {

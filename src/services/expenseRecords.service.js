@@ -2,7 +2,8 @@ import * as repository from "../repositories/expenseRecords.repository.js";
 import * as expenseTypeRepository from "../repositories/expenseTypes.repository.js";
 import * as dailyExtraSavingsRepository from "../repositories/dailyExtraSavings.repository.js";
 import * as extraSavingsService from "./extraSavings.service.js";
-import { toDateString } from "../utils/date.js";
+import * as userRepository from "../repositories/user.repository.js";
+import { toDateString, weekRange } from "../utils/date.js";
 
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
@@ -55,6 +56,37 @@ const assertNotFuture = (date) => {
   }
 };
 
+// A week holds one record per working day: the user spends on
+// `working_days_per_week` days, so a seventh record in a six-day week is
+// spending on a day the budget never allowed for. The unique (user_id, date)
+// constraint already keeps it to one a day; this keeps the week to the days
+// that were budgeted.
+//
+// `excludeId` is the record being updated — moving a record within its own
+// week must not count it against itself.
+//
+// Two creates racing can both pass this and leave the week one over. The
+// check would have to be part of the insert to close that, which means the
+// day count in SQL, and one extra record in a week is not worth it.
+const assertWeekHasRoom = async (userId, date, excludeId) => {
+  const user = await userRepository.findById(userId);
+
+  const [start, end] = weekRange(date);
+
+  const count = await repository.countInWeek(userId, {
+    start,
+    end,
+    excludeId,
+  });
+
+  if (count >= user.working_days_per_week) {
+    throw new AppError(
+      EXPENSE_RECORD_MESSAGES.WEEK_FULL(user.working_days_per_week),
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+};
+
 // Expense types are deactivated instead of deleted, and a deactivated
 // type must not back any new or re-pointed record.
 const loadActiveExpenseType = async (expenseTypeId, userId) => {
@@ -87,6 +119,8 @@ export const createExpenseRecord = async (userId, data) => {
   );
 
   assertNotFuture(data.date);
+
+  await assertWeekHasRoom(userId, data.date);
 
   let record;
 
@@ -213,6 +247,10 @@ export const updateExpenseRecord = async (
   );
 
   assertNotFuture(data.date);
+
+  // Checked against the week the record is moving to, which is its own week
+  // when only the type or the day changed.
+  await assertWeekHasRoom(userId, data.date, id);
 
   let record;
 

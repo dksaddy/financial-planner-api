@@ -117,20 +117,30 @@ A day left with **no** expense records has its row deleted rather than recalcula
 extra saving for a day with nothing recorded on it, which is what deleting the last record of a day
 used to do. A day whose records genuinely total 0 still keeps its row, hence count rather than sum.
 
-**One expense record per day** — `expense_records` carries unique `(user_id, date)`, matching the
+**One record a day, and one a working day per week** — `expense_records` carries unique `(user_id, date)`, matching the
 constraint `daily_extra_savings` has had since migration 007, so a day and its derived row are
 one-to-one. Postgres reports a clash as `23505`, which is not an `AppError` and would otherwise reach
 the client as a generic 500; `asDateTakenError` in `expenseRecords.service.js` translates it to a 409 on
 both the create and update paths. Tests must not reuse a date — `nextExpenseDate()` in
-`tests/helpers/expenseRecord.helper.js` hands out a fresh day outside the seeded range, and in the
-past, since a future date is refused. The literal dates the month-filter tests assert on (2021-03
-through 2023-06) sit between the helper's range and the seeded one, so neither adds a row the other
-counts.
+`tests/helpers/expenseRecord.helper.js` hands out a fresh day outside the seeded range, a week apart
+from the last so a test never fills a week (see below), and in the past, since a future date is
+refused. The literal dates the month-filter tests assert on (2021-03 through 2023-06) sit between the
+helper's range and the seeded one, so neither adds a row the other counts.
 
 A record is also never dated ahead: `assertNotFuture` refuses one past tomorrow on create and update.
 Tomorrow, not today, because the client sends the date from the user's own clock and the server does not
 know its zone — a user six hours ahead is a day ahead for the first six hours of every day. The web caps
-its date field and its schema at the user's own today, which is the clock that can tell.
+its date field and its schema at the user's own today, which is the clock that can tell. This is why the
+test helpers date records in the past (see below).
+
+On top of that, a week holds only as many records as the user has `working_days_per_week`:
+`assertWeekHasRoom` in `expenseRecords.service.js` counts the Saturday-to-Friday week a record is
+landing in and answers 400 `WEEK_FULL` once it is full, on create and on an update that moves a record
+into another week (the record being updated is excluded from its own count). The week is
+`weekRange()` in `utils/date.js`, the JS counterpart of the Saturday shift `dashboard.repository.js`
+spells in SQL for its current-week and last-four-weeks queries — a week means Saturday to Friday
+everywhere. Existing rows are never revisited, so a user who lowers their working days keeps whatever
+is already recorded.
 
 **Expense types** — `active` / `inactive` (and `all`, a filter value only) live in
 `src/constants/status.js` with every other status vocabulary, and `expenseTypeStatusOf(is_active)` there

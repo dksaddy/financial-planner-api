@@ -16,14 +16,20 @@ import { createExpenseType } from "./expenseType.helper.js";
 // months the month-filtering tests assert exact counts on (2021 through 2023).
 // A random day landing in one of those months adds a row those tests did not
 // seed, and they fail a run later once it is in the database. 1000 days from
-// 2015 reaches 2017, and the offsets below add days, not years.
+// 2015 reaches 2017, and the offsets below add weeks, not years.
+//
+// The step is a week rather than a day because a week holds only as many
+// records as the user has working days (six, by default). Consecutive days
+// would fill one and the seventh call would be refused — a 400 about working
+// days, in a test that only wanted another record. A week apart, every record
+// this hands out sits in a week of its own.
 const dateBase = randomInt(0, 1000);
 let dateOffset = 0;
 
 export function nextExpenseDate() {
   const day = new Date(Date.UTC(2015, 0, 1));
 
-  day.setUTCDate(day.getUTCDate() + dateBase + dateOffset++);
+  day.setUTCDate(day.getUTCDate() + dateBase + dateOffset++ * 7);
 
   return day.toISOString().slice(0, 10);
 }

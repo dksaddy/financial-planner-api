@@ -105,6 +105,8 @@ export const USER_MESSAGES = {
   AVATAR_NOT_FOUND: "Image not found",
   AVATAR_IN_USE:
     "This is your current profile picture. Upload a new photo before deleting it",
+  AVATAR_LIMIT_REACHED: (max) =>
+    `You can keep ${max} photos. Delete one before uploading another`,
 
   OLD_PASSWORD_INCORRECT: "Old password is incorrect",
 

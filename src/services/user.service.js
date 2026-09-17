@@ -8,6 +8,7 @@ import {
   USER_MESSAGES,
 } from "../constants/messages.js";
 import bcrypt from "bcrypt";
+import { AVATAR_MAX } from "../constants/limits.js";
 
 // A week cannot hold more working days than its month. The update may carry
 // only one of the two, so the other side is the stored figure. The users
@@ -67,6 +68,22 @@ export const uploadAvatar = async (userId, file) => {
   if (!file) {
     throw new AppError(
       USER_MESSAGES.AVATAR_REQUIRED,
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
+  // The album is capped. Nothing here replaces a file — every upload is a new
+  // uuid — so a user at the cap deletes one before another can go in. Counted
+  // before the upload, or a refused photo would still reach storage.
+  //
+  // Two uploads racing can both pass this and leave the album one over; the
+  // listing has no lock to take, and one extra photo is not worth a table to
+  // track what storage already knows.
+  const album = await listAvatars(userId);
+
+  if (album.length >= AVATAR_MAX) {
+    throw new AppError(
+      USER_MESSAGES.AVATAR_LIMIT_REACHED(AVATAR_MAX),
       HTTP_STATUS.BAD_REQUEST
     );
   }

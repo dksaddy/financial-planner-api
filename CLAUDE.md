@@ -184,6 +184,13 @@ output is WebP whatever went in. A re-encode that comes out no smaller than the 
 the original stored instead, so compressing can never cost space. Currently wired into
 `targets.service.js` only; `user.service.js` avatars still upload at full size.
 
+An avatar album is capped at `AVATAR_MAX` (3). Storage is the only record of it — every upload lands in
+`${userId}/<uuid>.<ext>` and nothing replaces a file — so `uploadAvatar` counts the folder listing and
+answers 400 `AVATAR_LIMIT_REACHED` before it uploads. A full album has to have a photo deleted first,
+and the current avatar cannot be deleted (`AVATAR_IN_USE`), so the user picks another photo, then
+deletes. The web mirrors the cap in its own `limits.js` and disables the picker rather than letting a
+fourth file be chosen.
+
 **Dates** — `pg` returns `date` columns as JS `Date`, while validated request bodies carry
 `"YYYY-MM-DD"` strings. Always normalize with `toDateString()` from `src/utils/date.js` before comparing
 or keying by a date; mismatches here are silent.

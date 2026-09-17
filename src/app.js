@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
 import { COMMON_MESSAGES } from "./constants/messages.js";
 import authRoutes from "./routes/auth.routes.js";
 import notFound from "./middlewares/notFound.middleware.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import { env } from "./config/env.js";
+import requestId from "./middlewares/requestId.middleware.js";
+import { accessLog } from "./utils/logger.js";
 
 import savingPlansRoutes from "./routes/savingPlans.routes.js";
 import expenseTypesRoutes from "./routes/expenseTypes.routes.js";
@@ -39,10 +40,13 @@ app.use(
 
       return callback(new Error(COMMON_MESSAGES.CORS_BLOCKED));
     },
+    // So a browser client can read the id and quote it when reporting an error.
+    exposedHeaders: ["X-Request-Id"],
   })
 );
+app.use(requestId);
 app.use(helmet());
-app.use(morgan("dev"));
+app.use(accessLog());
 app.use(express.json());
 
 app.get("/", (req, res) => {

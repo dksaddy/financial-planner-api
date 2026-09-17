@@ -1,6 +1,7 @@
 import { HTTP_STATUS } from "../constants/httpStatus.js";
 import { COMMON_MESSAGES } from "../constants/messages.js";
 import { env } from "../config/env.js";
+import { logError } from "../utils/logger.js";
 
 const errorHandler = (err, req, res, next) => {
   const statusCode = err.statusCode || HTTP_STATUS.INTERNAL_SERVER_ERROR;
@@ -15,9 +16,9 @@ const errorHandler = (err, req, res, next) => {
 
   // Always log the real error server-side so nothing is lost for debugging.
   if (!err.isOperational) {
-    console.error(err);
+    logError(err, req);
   } else if (env.nodeEnv !== "production") {
-    console.error(err.message);
+    console.error(`[${req.id ?? "-"}]`, err.message);
   }
 
   res.status(statusCode).json({

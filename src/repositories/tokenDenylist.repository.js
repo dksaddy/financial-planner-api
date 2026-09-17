@@ -29,3 +29,17 @@ export const isRevoked = async (jti) => {
 
   return rows.length > 0;
 };
+
+// A revoked token past its own expiry is refused by `jwt.verify` before the
+// denylist is ever read, so its row guards nothing and can go. Uses the
+// `expires_at` index from migration 006. Returns how many rows went.
+export const purgeExpired = async () => {
+  const { rowCount } = await query(
+    `
+    DELETE FROM token_denylist
+    WHERE expires_at < NOW()
+    `
+  );
+
+  return rowCount;
+};

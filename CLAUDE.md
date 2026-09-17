@@ -227,6 +227,7 @@ or keying by a date; mismatches here are silent.
 
 **Auth** — JWTs carry a `jti`. Logout inserts it into `token_denylist`, and `auth.middleware.js` checks
 the denylist on every request, so token revocation is a DB round-trip, not stateless.
+`jobs/purgeTokenDenylist.js` deletes rows past `expires_at` hourly (started by `server.js`).
 
 ## Database
 

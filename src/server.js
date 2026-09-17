@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { env } from "./config/env.js";
 import { pool } from "./config/database.js";
+import { startTokenDenylistPurge } from "./jobs/purgeTokenDenylist.js";
 
 const startServer = async () => {
   try {
@@ -15,6 +16,8 @@ const startServer = async () => {
     app.listen(env.port, () => {
       console.log(`🚀 Server running on port ${env.port}`);
     });
+
+    startTokenDenylistPurge();
   } catch (error) {
     console.error("❌ Failed to connect to PostgreSQL");
     console.error(error);

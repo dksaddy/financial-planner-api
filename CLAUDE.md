@@ -178,9 +178,13 @@ final. Deposits are capped at `deposit_amount`: the service answers 400 with the
 `repository.addDeposit` repeats the status and cap guards inside its `UPDATE`, completing the plan in
 the same statement when a deposit fills it — so racing deposits cannot overfill. The web mirrors the
 transitions in `src/lib/savingPlan.js` `canChangeStatus`. On the dashboard, the Saving Summary
-totals (deposit, withdrawal, profit) count active and completed plans and leave out withdrawn;
-everything else — the weekly/monthly saving that feeds `calculateBudget` (Spending, Progress, Saving
-Breakdown, stored daily budgets) and the Overview and Savings plan lists — counts active plans only.
+totals (deposit, withdrawal, profit, tax, net profit) count active and completed plans and leave out
+withdrawn; everything else — the weekly/monthly saving that feeds `calculateBudget` (Spending,
+Progress, Saving Breakdown, stored daily budgets) and the Overview and Savings plan lists — counts
+active plans only. Deposit and withdrawal are summed in `getDashboardSummary`, but the tax over that
+same set is not: it is each plan's own rate on its own gain, so `getSavingPlanFigures` returns the
+non-withdrawn rows and the service folds each through `calculateProfit`. A single `SUM` would let one
+plan's loss cancel another plan's tax.
 
 Each plan carries its own `tax_rate`, a percent (migration 015, default 15, bounded 0–100 in
 `limits.js` and the check constraint). `utils/savingPlan.js` `calculateProfit` is the one place profit,

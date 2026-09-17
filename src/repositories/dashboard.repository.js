@@ -62,6 +62,27 @@ export const getDashboardSummary = async (userId) => {
   return rows[0];
 };
 
+// The three figures `calculateProfit` needs, for the same set the summary
+// totals above count: every plan that has not been withdrawn. Tax is charged
+// per plan and only on a gain, so the totals cannot be a `SUM` over the whole
+// set — the rows come back and the service folds each one through that
+// function, which is the only place the maths lives.
+export const getSavingPlanFigures = async (userId) => {
+  const sql = `
+    SELECT
+      deposit_amount,
+      withdrawal_amount,
+      tax_rate
+    FROM saving_plans
+    WHERE user_id = $1
+      AND status <> 'withdrawn';
+  `;
+
+  const { rows } = await query(sql, [userId]);
+
+  return rows;
+};
+
 export const getSavingPlans = async (userId) => {
   const sql = `
     SELECT

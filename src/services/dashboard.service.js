@@ -8,6 +8,7 @@ import { toDateString } from "../utils/date.js";
 export const getDashboardData = async (userId) => {
   const [
     summary,
+    savingPlanFigures,
     savingPlans,
     pendingTargets,
     topExpenses,
@@ -16,6 +17,7 @@ export const getDashboardData = async (userId) => {
     extraSaving,
   ] = await Promise.all([
     repository.getDashboardSummary(userId),
+    repository.getSavingPlanFigures(userId),
     repository.getSavingPlans(userId),
     repository.getPendingTargets(userId),
     repository.getTopExpenseTypes(userId),
@@ -43,6 +45,23 @@ export const getDashboardData = async (userId) => {
   const workingDaysPerWeek = Number(summary.working_days_per_week);
 
   const profit = totalWithdrawal - totalDeposit;
+
+  // Tax over the same plans the totals above count. It is summed plan by plan
+  // through `calculateProfit` rather than in the query, because the rate is
+  // each plan's own and a plan that lost money pays nothing — a single SUM
+  // over the set would let one plan's loss cancel another plan's tax.
+  const tax = savingPlanFigures.reduce(
+    (total, plan) =>
+      total +
+      calculateProfit({
+        depositAmount: Number(plan.deposit_amount),
+        withdrawalAmount: Number(plan.withdrawal_amount),
+        taxRate: Number(plan.tax_rate),
+      }).tax,
+    0
+  );
+
+  const netProfit = profit - tax;
 
   const savingPlanProgress = savingPlans.map((plan) => {
     const depositAmount = Number(plan.deposit_amount);
@@ -241,6 +260,8 @@ export const getDashboardData = async (userId) => {
       totalDeposit,
       totalWithdrawal,
       profit,
+      tax: Number(tax.toFixed(2)),
+      netProfit: Number(netProfit.toFixed(2)),
       weeklySaving,
       monthlySaving,
       totalMonthlySaving,

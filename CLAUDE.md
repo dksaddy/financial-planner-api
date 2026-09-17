@@ -122,7 +122,15 @@ constraint `daily_extra_savings` has had since migration 007, so a day and its d
 one-to-one. Postgres reports a clash as `23505`, which is not an `AppError` and would otherwise reach
 the client as a generic 500; `asDateTakenError` in `expenseRecords.service.js` translates it to a 409 on
 both the create and update paths. Tests must not reuse a date — `nextExpenseDate()` in
-`tests/helpers/expenseRecord.helper.js` hands out a fresh day outside the seeded range.
+`tests/helpers/expenseRecord.helper.js` hands out a fresh day outside the seeded range, and in the
+past, since a future date is refused. The literal dates the month-filter tests assert on (2021-03
+through 2023-06) sit between the helper's range and the seeded one, so neither adds a row the other
+counts.
+
+A record is also never dated ahead: `assertNotFuture` refuses one past tomorrow on create and update.
+Tomorrow, not today, because the client sends the date from the user's own clock and the server does not
+know its zone — a user six hours ahead is a day ahead for the first six hours of every day. The web caps
+its date field and its schema at the user's own today, which is the clock that can tell.
 
 **Expense types** — `active` / `inactive` (and `all`, a filter value only) live in
 `src/constants/status.js` with every other status vocabulary, and `expenseTypeStatusOf(is_active)` there

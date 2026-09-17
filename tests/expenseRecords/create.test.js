@@ -24,6 +24,30 @@ describe("POST /api/expense-records", () => {
     expect(response.body.data.expense_type_id).toBe(expenseType.id);
   });
 
+  it("should reject a record dated in the future", async () => {
+    const { token } = await login();
+    const { expenseType } = await createExpenseType(token);
+
+    // A week ahead, so it is past the day of slack the service allows for a
+    // client whose clock is in a zone ahead of the server's.
+    const future = new Date();
+
+    future.setDate(future.getDate() + 7);
+
+    const response = await api()
+      .post("/api/expense-records")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        expense_type_id: expenseType.id,
+        date: future.toISOString().slice(0, 10),
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      "An expense record cannot be dated in the future"
+    );
+  });
+
   it("should reject a second record on the same date", async () => {
     const { token } = await login();
     const { expenseType } = await createExpenseType(token);

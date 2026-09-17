@@ -11,15 +11,17 @@ import { createExpenseType } from "./expenseType.helper.js";
 // keeps successive runs, which share one database unless `prepare:test` wipes
 // it between them, from landing on the same day as each other.
 //
-// The epoch is 2040 rather than 2030 to stay clear of the literal dates the
-// month-filtering tests assert exact counts on (2030-03 through 2032-06). A
-// random day landing in one of those months adds a row those tests did not
-// seed, and they fail a run later once it is in the database.
-const dateBase = randomInt(0, 20000);
+// The days are in the past because a record cannot be dated ahead of today,
+// and far enough back to stay clear of both the seeded range and the literal
+// months the month-filtering tests assert exact counts on (2021 through 2023).
+// A random day landing in one of those months adds a row those tests did not
+// seed, and they fail a run later once it is in the database. 1000 days from
+// 2015 reaches 2017, and the offsets below add days, not years.
+const dateBase = randomInt(0, 1000);
 let dateOffset = 0;
 
 export function nextExpenseDate() {
-  const day = new Date(Date.UTC(2040, 0, 1));
+  const day = new Date(Date.UTC(2015, 0, 1));
 
   day.setUTCDate(day.getUTCDate() + dateBase + dateOffset++);
 

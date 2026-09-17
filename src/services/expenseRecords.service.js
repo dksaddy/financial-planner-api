@@ -33,6 +33,28 @@ const asDateTakenError = (error) => {
   return error;
 };
 
+// An expense record says what was spent, so it cannot be dated ahead of the
+// day it is written on.
+//
+// The bound is tomorrow, not today, and the extra day is deliberate: the
+// client sends the date from the user's own clock, and the server has no idea
+// what zone that clock is in. A user six hours ahead of the server is a day
+// ahead of it for the first six hours of every day, and a strict comparison
+// would refuse them today's record every morning. The web caps its date field
+// at the user's own today, which is the clock that can actually tell.
+const assertNotFuture = (date) => {
+  const limit = new Date();
+
+  limit.setDate(limit.getDate() + 1);
+
+  if (toDateString(date) > toDateString(limit)) {
+    throw new AppError(
+      EXPENSE_RECORD_MESSAGES.DATE_IN_FUTURE,
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+};
+
 // Expense types are deactivated instead of deleted, and a deactivated
 // type must not back any new or re-pointed record.
 const loadActiveExpenseType = async (expenseTypeId, userId) => {
@@ -63,6 +85,8 @@ export const createExpenseRecord = async (userId, data) => {
     data.expense_type_id,
     userId
   );
+
+  assertNotFuture(data.date);
 
   let record;
 
@@ -187,6 +211,8 @@ export const updateExpenseRecord = async (
     data.expense_type_id,
     userId
   );
+
+  assertNotFuture(data.date);
 
   let record;
 

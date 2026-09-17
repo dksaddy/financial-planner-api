@@ -106,16 +106,16 @@ describe("GET /api/expense-records", () => {
     // ORDER BY stays regardless; what this still covers is that paging a month
     // yields every row exactly once.
     await seedDates(token, [
-      "2030-03-04",
-      "2030-03-05",
-      "2030-03-06",
-      "2030-03-07",
-      "2030-03-08",
+      "2021-03-04",
+      "2021-03-05",
+      "2021-03-06",
+      "2021-03-07",
+      "2021-03-08",
     ]);
 
-    const first = await list(token, "?month=2030-03&limit=2&page=1");
-    const second = await list(token, "?month=2030-03&limit=2&page=2");
-    const third = await list(token, "?month=2030-03&limit=2&page=3");
+    const first = await list(token, "?month=2021-03&limit=2&page=1");
+    const second = await list(token, "?month=2021-03&limit=2&page=2");
+    const third = await list(token, "?month=2021-03&limit=2&page=3");
 
     const ids = [
       ...first.body.data,
@@ -130,15 +130,15 @@ describe("GET /api/expense-records", () => {
   it("should filter by month", async () => {
     const { token } = await login();
 
-    await seedDates(token, ["2031-01-10", "2031-02-11", "2031-02-12"]);
+    await seedDates(token, ["2022-01-10", "2022-02-11", "2022-02-12"]);
 
-    const response = await list(token, "?month=2031-02");
+    const response = await list(token, "?month=2022-02");
 
     expect(response.status).toBe(200);
     expect(response.body.meta.pagination.total).toBe(2);
     expect(
       response.body.data.every((record) =>
-        record.date.startsWith("2031-02")
+        record.date.startsWith("2022-02")
       )
     ).toBe(true);
   });
@@ -146,16 +146,16 @@ describe("GET /api/expense-records", () => {
   it("should list every month the user has records in", async () => {
     const { token } = await login();
 
-    await seedDates(token, ["2032-05-01", "2032-06-01"]);
+    await seedDates(token, ["2023-05-01", "2023-06-01"]);
 
-    const response = await list(token, "?month=2032-05");
+    const response = await list(token, "?month=2023-05");
 
     const { months } = response.body.meta;
 
     // Months are not narrowed by the active filter — the tabs must stay
     // complete while a month is selected.
-    expect(months).toContain("2032-05");
-    expect(months).toContain("2032-06");
+    expect(months).toContain("2023-05");
+    expect(months).toContain("2023-06");
     expect([...months]).toEqual([...months].sort().reverse());
   });
 

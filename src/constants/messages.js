@@ -262,6 +262,10 @@ export const EXPENSE_RECORD_MESSAGES = {
 
   // `expense_records` carries unique (user_id, date) — one record per day.
   DATE_TAKEN: "An expense record already exists for that date",
+
+  // Spending is recorded, not planned: a record is dated today or earlier.
+  DATE_IN_FUTURE: "An expense record cannot be dated in the future",
+
 };
 
 export const TARGET_MESSAGES = {

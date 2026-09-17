@@ -22,4 +22,8 @@ export const env = {
   },
 
   corsOrigin: process.env.CORS_ORIGIN,
+
+  // Hops of reverse proxy in front of the app — 1 on Render. Unset means none,
+  // which is right for local development.
+  trustProxy: Number(process.env.TRUST_PROXY) || 0,
 };

@@ -253,6 +253,17 @@ middleware refuses any token issued before it, so every existing session ends; `
 returns a fresh `{ token, user }` for the caller. A wrong old password is a 403 and the route shares
 `passwordConfirmLimiter` with the saving-plan mutations. The new password must differ from the old one.
 
+## Deployment
+
+Render, from `render.yaml` (a Blueprint): `npm ci`, then `npm run migrate && npm start`, so migrations run
+before every start. Secrets are `sync: false` and set in the dashboard. `NODE_ENV=production` turns on SSL
+for both the app pool and `scripts/db.js`; `TRUST_PROXY=1` makes `req.ip` the visitor rather than Render's
+proxy, which the IP-keyed login limiter depends on. `CORS_ORIGIN` is the Vercel URL.
+
+`GET /api/health` is unauthenticated, unlimited and unlogged when healthy: 200 with `database: "up"`, or
+503 when `SELECT 1` fails. It is Render's `healthCheckPath`. Nothing keeps the free service awake on
+purpose: it sleeps after 15 idle minutes and the next request waits out a cold start.
+
 ## Database
 
 Plain SQL files in `migrations/`, applied in filename order by `scripts/migrate.js`, tracked in a

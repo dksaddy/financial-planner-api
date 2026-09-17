@@ -1,0 +1,42 @@
+# Render Blueprint for the API. New → Blueprint → pick this repo, then fill in
+# every `sync: false` value in the dashboard; they are secrets and never live
+# in the repo.
+services:
+  - type: web
+    name: financial-planner-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    # Migrations run before every start, so a deploy never serves code ahead of
+    # its schema. Each migration runs once; applied ones are skipped.
+    startCommand: npm run migrate && npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "6543"
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        sync: false
+      # The Vercel URL, no trailing slash. Comma-separate to allow more.
+      - key: CORS_ORIGIN
+        sync: false

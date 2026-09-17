@@ -19,6 +19,15 @@ import healthRoutes from "./routes/health.routes.js";
 
 const app = express();
 
+// Render terminates TLS and forwards every request through its own proxy.
+// Without this `req.ip` is that proxy's address for every visitor, so the
+// login limiter, which keys on the IP, would lock everyone out together after
+// five bad attempts from anyone. Trusts exactly as many hops as are configured,
+// never blindly, so a client cannot spoof its IP with its own header.
+if (env.trustProxy > 0) {
+  app.set("trust proxy", env.trustProxy);
+}
+
 // Comma-separated list in CORS_ORIGIN supports multiple environments
 // (e.g. local dev + deployed frontend) without code changes.
 const allowedOrigins = (env.corsOrigin || "")

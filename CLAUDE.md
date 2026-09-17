@@ -111,7 +111,9 @@ send only one. `getDashboardSummary` reads them alongside salary, and the dashbo
 budget inline, and never pass a literal day count.
 
 Changing working days, like changing salary, does not rewrite stored `daily_extra_savings` rows: each
-keeps the budget it was written with, and new figures apply from the next expense-record mutation.
+keeps the budget it was written with — `recalculateDayExtraSaving` reuses a day's stored `budget_amount`
+when the row exists, so editing an old record re-weighs its spend but never re-bases its budget. New
+figures apply only to days written after the change.
 
 **Extra Saving** — `daily_extra_savings` rows are a *derived cache*, written only on expense-record
 mutation. `expenseRecords.service.js` calls `extraSavingsService.recalculateDayExtraSaving(userId, date)`

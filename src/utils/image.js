@@ -28,19 +28,25 @@ const EXTENSIONS = {
 /**
  * Shrinks an uploaded image to something worth storing.
  *
+ * `maxDimension` caps the long edge — a target picture keeps the 1024px
+ * default, an avatar passes its own, smaller figure.
+ *
  * Returns the encoded buffer alongside the content type and extension it
  * should be stored under — the output is always WebP, so the caller must not
  * reuse the original file's extension.
  */
-export const compressImage = async (file) => {
+export const compressImage = async (
+  file,
+  { maxDimension = MAX_DIMENSION } = {}
+) => {
   const animated = isAnimated(file.mimetype);
 
   try {
     const buffer = await sharp(file.buffer, { animated })
       .rotate() // Honour the EXIF orientation before it is stripped below.
       .resize({
-        width: MAX_DIMENSION,
-        height: MAX_DIMENSION,
+        width: maxDimension,
+        height: maxDimension,
         fit: "inside",
         // Never upscale: a small image would only get heavier.
         withoutEnlargement: true,

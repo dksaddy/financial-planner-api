@@ -211,8 +211,8 @@ client as. There is no default size: each route passes its own — `TARGET_IMAGE
 long edge and re-encoded as WebP q70, which puts a phone photo under 100KB. It returns the extension
 and content type to store under, so callers must use those rather than the original filename's — the
 output is WebP whatever went in. A re-encode that comes out no smaller than the source is discarded and
-the original stored instead, so compressing can never cost space. Currently wired into
-`targets.service.js` only; `user.service.js` avatars still upload at full size.
+the original stored instead, so compressing can never cost space. It takes an optional `maxDimension`:
+targets use the 1024 default, avatars pass 256.
 
 An avatar album is capped at `AVATAR_MAX` (3). Storage is the only record of it — every upload lands in
 `${userId}/<uuid>.<ext>` and nothing replaces a file — so `uploadAvatar` counts the folder listing and

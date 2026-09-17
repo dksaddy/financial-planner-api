@@ -9,6 +9,11 @@ import {
 } from "../constants/messages.js";
 import bcrypt from "bcrypt";
 import { AVATAR_MAX } from "../constants/limits.js";
+import { compressImage } from "../utils/image.js";
+import { withUserLock } from "../db/query.js";
+
+// An avatar is never drawn above 128px; 256 covers a retina screen.
+const AVATAR_MAX_DIMENSION = 256;
 
 // A week cannot hold more working days than its month. The update may carry
 // only one of the two, so the other side is the stored figure. The users
@@ -82,48 +87,50 @@ export const uploadAvatar = async (userId, file) => {
     );
   }
 
+  // Shrunk before the lock is taken — it is the slow part and needs no lock —
+  // and before the count, so an undecodable file is refused without a listing.
+  const image = await compressImage(file, {
+    maxDimension: AVATAR_MAX_DIMENSION,
+  });
+
   // The album is capped. Nothing here replaces a file — every upload is a new
   // uuid — so a user at the cap deletes one before another can go in. Counted
   // before the upload, or a refused photo would still reach storage.
   //
-  // Two uploads racing can both pass this and leave the album one over; the
-  // listing has no lock to take, and one extra photo is not worth a table to
-  // track what storage already knows.
-  const album = await listAvatars(userId);
+  // Storage has no lock of its own, so the count and the upload run under the
+  // user's advisory lock: two uploads at once take turns, and the second one
+  // sees the first one's photo in the listing.
+  return withUserLock(userId, async () => {
+    const album = await listAvatars(userId);
 
-  if (album.length >= AVATAR_MAX) {
-    throw new AppError(
-      USER_MESSAGES.AVATAR_LIMIT_REACHED(AVATAR_MAX),
-      HTTP_STATUS.BAD_REQUEST
+    if (album.length >= AVATAR_MAX) {
+      throw new AppError(
+        USER_MESSAGES.AVATAR_LIMIT_REACHED(AVATAR_MAX),
+        HTTP_STATUS.BAD_REQUEST
+      );
+    }
+
+    const fileName = `${userId}/${uuid()}.${image.extension}`;
+
+    const { error } = await supabase.storage
+      .from(process.env.SUPABASE_BUCKET)
+      .upload(fileName, image.buffer, {
+        contentType: image.contentType,
+        upsert: true,
+      });
+
+    if (error) {
+      throw new AppError(
+        error.message,
+        HTTP_STATUS.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    return await userRepository.updateAvatar(
+      userId,
+      buildPublicUrl(fileName)
     );
-  }
-
-  const extension = file.originalname.split(".").pop();
-
-  const fileName = `${userId}/${uuid()}.${extension}`;
-
-  const { error } = await supabase.storage
-    .from(process.env.SUPABASE_BUCKET)
-    .upload(fileName, file.buffer, {
-      contentType: file.mimetype,
-      upsert: true,
-    });
-
-  if (error) {
-    throw new AppError(
-      error.message,
-      HTTP_STATUS.INTERNAL_SERVER_ERROR
-    );
-  }
-
-  const { data } = supabase.storage
-    .from(process.env.SUPABASE_BUCKET)
-    .getPublicUrl(fileName);
-
-  return await userRepository.updateAvatar(
-    userId,
-    data.publicUrl
-  );
+  });
 };
 
 // Every upload lands in `${userId}/<uuid>.<ext>` and nothing overwrites or

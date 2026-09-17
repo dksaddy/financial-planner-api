@@ -202,6 +202,12 @@ withdrawal less that tax. The dashboard returns `taxRate`, `tax`, `inHand` and `
 plan; `GET /saving-plans` returns raw rows and the web's `normalizeSavingPlan` mirrors the maths. `taxRate` is optional on create (takes `DEFAULT_TAX_RATE`) and
 on update (keeps the stored rate), and editable in any status like every other plan field.
 
+An edit may not set `depositAmount` below `currently_deposited` (400, repeated inside the `UPDATE` so a
+racing deposit cannot slip under it). Status follows the target in the same statement: an active plan the
+new target leaves full completes, a completed plan whose target is raised past what is deposited reopens,
+a plan completed by hand stays completed through an edit that does not raise it, and withdrawn never
+moves.
+
 **Uploads** — `upload.middleware.js` accepts `IMAGE_TYPES` (JPG/PNG/WEBP/GIF, in `limits.js`, mirrored
 by the web's pickers) into memory. Its `single(field, maxMb)` wraps multer's so an oversized file
 answers 400 `UPLOAD_MESSAGES.TOO_LARGE` rather than the generic 500 a raw `MulterError` would reach the

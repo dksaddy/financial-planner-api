@@ -204,6 +204,10 @@ export const SAVING_PLAN_MESSAGES = {
   STATUS_CHANGED_MEANWHILE:
     "Saving plan status changed meanwhile, try again",
   CHANGED_MEANWHILE: "Saving plan changed meanwhile, try again",
+
+  // An edit may not set the deposit target under what is already in the plan.
+  DEPOSIT_TARGET_BELOW_DEPOSITED: (deposited) =>
+    `Deposit amount cannot be less than the ${deposited} already deposited`,
 };
 
 export const EXPENSE_TYPE_MESSAGES = {

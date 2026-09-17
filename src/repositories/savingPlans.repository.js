@@ -65,6 +65,17 @@ export const findById = async (id, userId) => {
   return result.rows[0];
 };
 
+// Status follows a change to the deposit target, the same way `addDeposit`
+// completes a plan when it fills: an active plan the new target leaves full
+// becomes completed, and a completed plan whose target is *raised* past what
+// is deposited reopens to active, so it takes deposits again. A plan completed
+// by hand before it was full stays completed through an edit that does not
+// raise its target. Withdrawn is final and never moves. In the CASE,
+// `deposit_amount` is still the stored figure and $7 the new one.
+//
+// Refuses — returns nothing — when the new target is under what is already
+// deposited. The service checks that first; this repeats it inside the UPDATE
+// so a deposit racing the edit cannot leave the plan over-filled.
 export const update = async (id, userId, data) => {
   const result = await query(
     `
@@ -78,9 +89,21 @@ export const update = async (id, userId, data) => {
       deposit_frequency = $8,
       withdrawal_amount = $9,
       tax_rate = $10,
+      status = CASE
+        WHEN status = 'active'
+          AND $7 > 0
+          AND currently_deposited >= $7
+          THEN 'completed'
+        WHEN status = 'completed'
+          AND $7 > deposit_amount
+          AND currently_deposited < $7
+          THEN 'active'
+        ELSE status
+      END,
       updated_at = NOW()
     WHERE id = $1
       AND user_id = $2
+      AND currently_deposited <= $7
     RETURNING *;
     `,
     [

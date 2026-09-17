@@ -47,12 +47,35 @@ export const updateSavingPlan = async (id, userId, data) => {
     throw new AppError(SAVING_PLAN_MESSAGES.NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
 
+  // The deposit path caps what goes in at `deposit_amount`; an edit must not
+  // pull the cap under what is already in, or the plan is left over-filled.
+  if (toCents(data.depositAmount) < toCents(existing.currently_deposited)) {
+    throw new AppError(
+      SAVING_PLAN_MESSAGES.DEPOSIT_TARGET_BELOW_DEPOSITED(
+        Number(existing.currently_deposited).toFixed(2)
+      ),
+      HTTP_STATUS.BAD_REQUEST
+    );
+  }
+
   // An update that leaves the rate out keeps the stored one rather than
-  // falling back to the default.
-  return await repository.update(id, userId, {
+  // falling back to the default. The repository re-checks the cap in its
+  // UPDATE and moves the plan between active and completed to match the new
+  // target, so a deposit landing between the check above and the write cannot
+  // leave it over-filled either.
+  const plan = await repository.update(id, userId, {
     ...data,
     taxRate: data.taxRate ?? existing.tax_rate,
   });
+
+  if (!plan) {
+    throw new AppError(
+      SAVING_PLAN_MESSAGES.CHANGED_MEANWHILE,
+      HTTP_STATUS.CONFLICT
+    );
+  }
+
+  return plan;
 };
 
 // Money is compared in integer cents: numeric columns arrive as strings and

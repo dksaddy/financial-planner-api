@@ -224,6 +224,11 @@ async function seed() {
        EXPENSE RECORDS
     ============================ */
 
+    // Saturday-to-Friday weeks, six records at most in each (the seeded users
+    // keep the default six working days a week): Wed 1st–Fri 3rd, then
+    // Sat 4th–Thu 9th with Friday the 10th left out, then Sat 11th–Wed 15th.
+    // The API refuses a seventh record in a week, so seeding one would give
+    // development data the app itself could never have produced.
     const dates = [
       "2026-07-01",
       "2026-07-02",
@@ -234,7 +239,6 @@ async function seed() {
       "2026-07-07",
       "2026-07-08",
       "2026-07-09",
-      "2026-07-10",
       "2026-07-11",
       "2026-07-12",
       "2026-07-13",

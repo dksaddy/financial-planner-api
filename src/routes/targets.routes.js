@@ -4,6 +4,8 @@ import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 
+import { TARGET_IMAGE_MAX_MB } from "../constants/limits.js";
+
 import {
   createTarget,
   getTargets,
@@ -23,7 +25,7 @@ router.use(authenticate);
 
 router.post(
   "/",
-  upload.single("image"),
+  upload.single("image", TARGET_IMAGE_MAX_MB),
   validate(createTargetSchema),
   createTarget
 );

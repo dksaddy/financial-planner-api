@@ -35,13 +35,25 @@ export const TAX_RATE_MIN = 0;
 export const TAX_RATE_MAX = 100;
 export const DEFAULT_TAX_RATE = 15;
 
-// What an uploaded picture (a target image, an avatar) may be. The web's
-// `constants/limits.js` mirrors both, so a picker refuses a file before it is
-// sent and says why.
+// What an uploaded picture may be. The web's `constants/limits.js` mirrors
+// these, so a picker refuses a file before it is sent and says why.
 export const IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/gif",
 ];
-export const IMAGE_MAX_MB = 5;
+
+// Size is per upload rather than one figure for every picture: each route
+// names its own, and `upload.middleware.js` takes no default, so a new upload
+// route has to decide what it will accept.
+//
+// A target picture is re-encoded to WebP at 1024px before it is stored, so
+// what this bounds is the phone photo on its way in, not what is kept.
+export const TARGET_IMAGE_MAX_MB = 2;
+
+// Profile pictures. The album is every avatar a user has ever uploaded and
+// nothing replaces a file, so without a cap it grows without end — a full
+// album has to have a photo deleted before another can go in.
+export const AVATAR_MAX = 3;
+export const AVATAR_MAX_MB = 3;

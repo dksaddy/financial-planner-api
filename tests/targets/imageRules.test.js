@@ -5,7 +5,7 @@ import { login } from "../helpers/auth.helper.js";
 // Both rules are enforced while the multipart body is parsed, before the
 // service or storage is reached, so no picture is ever uploaded here.
 describe("POST /api/target image rules", () => {
-  it("should reject an image over 5MB", async () => {
+  it("should reject an image over 2MB", async () => {
     const { token } = await login();
 
     const response = await api()
@@ -13,13 +13,13 @@ describe("POST /api/target image rules", () => {
       .set("Authorization", `Bearer ${token}`)
       .field("name", "Big Picture")
       .field("target_amount", "1000")
-      .attach("image", Buffer.alloc(5 * 1024 * 1024 + 1), {
+      .attach("image", Buffer.alloc(2 * 1024 * 1024 + 1), {
         filename: "big.png",
         contentType: "image/png",
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Image must be 5MB or smaller");
+    expect(response.body.message).toBe("Image must be 2MB or smaller");
   });
 
   it("should reject a file that is not a JPG, PNG, WEBP or GIF", async () => {

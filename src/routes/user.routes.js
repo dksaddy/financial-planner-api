@@ -4,6 +4,8 @@ import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
 
+import { AVATAR_MAX_MB } from "../constants/limits.js";
+
 import {
   getProfile,
   updateProfile,
@@ -37,7 +39,8 @@ router.put(
 
 router.put(
   "/avatar",
-  upload.single("avatar"),
+  // Tighter than the general image limit — an avatar is never shown large.
+  upload.single("avatar", AVATAR_MAX_MB),
   updateAvatar
 );
 

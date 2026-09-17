@@ -59,6 +59,13 @@ row is absent from the map rather than present as zero. Paged list queries must 
 (`date DESC, created_at DESC, id DESC`) or rows shift between pages, and the service clamps a page past
 the end to the last page rather than returning an empty list.
 
+Transactions: `src/db/query.js` also exports `withUserLock(userId, work)`, which runs `work` in a
+transaction holding a per-user `pg_advisory_xact_lock`. Repositories need no change to take part —
+`query` routes to the transaction's client through `AsyncLocalStorage` while inside it. Use it wherever a
+rule is checked and then written: expense-record create/update/delete (weekly cap + the day's Extra
+Save), target updates (a completion spends Extra Save) and avatar uploads (album cap). Nested calls reuse
+the outer transaction.
+
 Errors: `AppError` sets `isOperational`. `error.middleware.js` only echoes messages from operational
 errors; anything else becomes a generic 500 with the real error logged server-side. Validation failures
 short-circuit in `validate.middleware.js` with a different shape (`{ success, message, errors[] }` — no

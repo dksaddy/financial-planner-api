@@ -42,8 +42,11 @@ export const pool = new Pool({
   // `EMAXCONNSESSION: max clients reached in session mode`, which `pg` cannot
   // queue behind or retry, so the query rejects and the request 500s. DB_PORT
   // is the transaction pooler (6543) for that reason — it is built for many
-  // short-lived clients. Nothing here uses named prepared statements or holds
-  // a transaction across statements, which is what that mode rules out.
+  // short-lived clients. Nothing here uses named prepared statements or
+  // session-level state, which is what that mode rules out. `withUserLock` in
+  // `db/query.js` does open transactions, which that mode pins to one server
+  // connection until COMMIT, and its advisory lock is transaction-scoped for
+  // the same reason.
   max: 8,
 
   // Returned to the pooler sooner than the old 30s, so an idle dev server

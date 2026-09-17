@@ -3,6 +3,7 @@ import * as expenseTypeRepository from "../repositories/expenseTypes.repository.
 import * as dailyExtraSavingsRepository from "../repositories/dailyExtraSavings.repository.js";
 import * as extraSavingsService from "./extraSavings.service.js";
 import { todayIn, toDateString, weekRange } from "../utils/date.js";
+import { withUserLock } from "../db/query.js";
 
 import AppError from "../utils/AppError.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
@@ -55,9 +56,8 @@ const assertNotFuture = (date, timeZone) => {
 // `excludeId` is the record being updated — moving a record within its own
 // week must not count it against itself.
 //
-// Two creates racing can both pass this and leave the week one over. The
-// check would have to be part of the insert to close that, which means the
-// day count in SQL, and one extra record in a week is not worth it.
+// Callers run this and the write it guards under `withUserLock`, so two creates
+// at once take turns and the second one counts the first one's record.
 const assertWeekHasRoom = async (user, date, excludeId) => {
   const userId = user.id;
 
@@ -114,24 +114,31 @@ export const createExpenseRecord = async (user, data) => {
 
   assertNotFuture(data.date, user.time_zone);
 
-  await assertWeekHasRoom(user, data.date);
+  // One transaction under the user's lock: the week count, the insert and the
+  // day's Extra Save land together or not at all. A date clash inside it
+  // rolls the whole thing back before it is translated to a 409.
+  const record = await withUserLock(userId, async () => {
+    await assertWeekHasRoom(user, data.date);
 
-  let record;
+    let created;
 
-  try {
-    record = await repository.create(userId, {
-      expense_type_id: data.expense_type_id,
-      date: data.date,
-      total: expenseType.total,
-    });
-  } catch (error) {
-    throw asDateTakenError(error);
-  }
+    try {
+      created = await repository.create(userId, {
+        expense_type_id: data.expense_type_id,
+        date: data.date,
+        total: expenseType.total,
+      });
+    } catch (error) {
+      throw asDateTakenError(error);
+    }
 
-  await extraSavingsService.recalculateDayExtraSaving(
-    userId,
-    data.date
-  );
+    await extraSavingsService.recalculateDayExtraSaving(
+      userId,
+      data.date
+    );
+
+    return created;
+  });
 
   return withNormalizedDate(record);
 };
@@ -244,50 +251,54 @@ export const updateExpenseRecord = async (
 
   assertNotFuture(data.date, user.time_zone);
 
-  // Checked against the week the record is moving to, which is its own week
-  // when only the type or the day changed.
-  await assertWeekHasRoom(user, data.date, id);
+  const record = await withUserLock(userId, async () => {
+    // Checked against the week the record is moving to, which is its own week
+    // when only the type or the day changed.
+    await assertWeekHasRoom(user, data.date, id);
 
-  let record;
+    let updated;
 
-  try {
-    record = await repository.update(
-      id,
-      userId,
-      {
-        expense_type_id: data.expense_type_id,
-        date: data.date,
-        total: expenseType.total,
-      }
-    );
-  } catch (error) {
-    throw asDateTakenError(error);
-  }
+    try {
+      updated = await repository.update(
+        id,
+        userId,
+        {
+          expense_type_id: data.expense_type_id,
+          date: data.date,
+          total: expenseType.total,
+        }
+      );
+    } catch (error) {
+      throw asDateTakenError(error);
+    }
 
-  if (!record) {
-    throw new AppError(
-      EXPENSE_RECORD_MESSAGES.NOT_FOUND,
-      HTTP_STATUS.NOT_FOUND
-    );
-  }
+    if (!updated) {
+      throw new AppError(
+        EXPENSE_RECORD_MESSAGES.NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND
+      );
+    }
 
-  // Recalculate the new date always. If the date was changed,
-  // also recalculate the old date — it no longer includes this
-  // record's amount, so its extra save figure has changed too.
-  const oldDate = toDateString(existing.date);
-  const newDate = toDateString(data.date);
+    // Recalculate the new date always. If the date was changed,
+    // also recalculate the old date — it no longer includes this
+    // record's amount, so its extra save figure has changed too.
+    const oldDate = toDateString(existing.date);
+    const newDate = toDateString(data.date);
 
-  await extraSavingsService.recalculateDayExtraSaving(
-    userId,
-    newDate
-  );
-
-  if (oldDate !== newDate) {
     await extraSavingsService.recalculateDayExtraSaving(
       userId,
-      oldDate
+      newDate
     );
-  }
+
+    if (oldDate !== newDate) {
+      await extraSavingsService.recalculateDayExtraSaving(
+        userId,
+        oldDate
+      );
+    }
+
+    return updated;
+  });
 
   return withNormalizedDate(record);
 };
@@ -296,19 +307,23 @@ export const deleteExpenseRecord = async (
   id,
   userId
 ) => {
-  const record = await repository.remove(id, userId);
+  // Locked like create and update, so the delete and the day's Extra Save
+  // cannot interleave with a target completion reading that total.
+  return withUserLock(userId, async () => {
+    const record = await repository.remove(id, userId);
 
-  if (!record) {
-    throw new AppError(
-      EXPENSE_RECORD_MESSAGES.NOT_FOUND,
-      HTTP_STATUS.NOT_FOUND
+    if (!record) {
+      throw new AppError(
+        EXPENSE_RECORD_MESSAGES.NOT_FOUND,
+        HTTP_STATUS.NOT_FOUND
+      );
+    }
+
+    await extraSavingsService.recalculateDayExtraSaving(
+      userId,
+      toDateString(record.date)
     );
-  }
 
-  await extraSavingsService.recalculateDayExtraSaving(
-    userId,
-    toDateString(record.date)
-  );
-
-  return record;
+    return record;
+  });
 };

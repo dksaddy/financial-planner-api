@@ -155,3 +155,24 @@ describe("expense records weekly limit", () => {
     );
   });
 });
+
+describe("expense records weekly limit under concurrency", () => {
+  it("should let only as many racing creates through as the week has days", async () => {
+    const { token } = await registerFreshUser();
+    const { expenseType } = await createExpenseType(token);
+
+    await api()
+      .put("/api/users/profile")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ working_days_per_week: 2 });
+
+    const responses = await Promise.all(
+      WEEK.map((date) => post(token, expenseType.id, date))
+    );
+
+    const statuses = responses.map((response) => response.status);
+
+    expect(statuses.filter((status) => status === 201)).toHaveLength(2);
+    expect(statuses.filter((status) => status === 400)).toHaveLength(5);
+  });
+});

@@ -11,6 +11,7 @@ import bcrypt from "bcrypt";
 import { AVATAR_MAX } from "../constants/limits.js";
 import { compressImage } from "../utils/image.js";
 import { withUserLock } from "../db/query.js";
+import { createSession } from "./auth.service.js";
 
 // An avatar is never drawn above 128px; 256 covers a retina screen.
 const AVATAR_MAX_DIMENSION = 256;
@@ -275,17 +276,21 @@ export const changePassword = async (
   if (!isMatch) {
     throw new AppError(
       USER_MESSAGES.OLD_PASSWORD_INCORRECT,
-      HTTP_STATUS.BAD_REQUEST
+      HTTP_STATUS.FORBIDDEN
     );
   }
 
   const hashedPassword =
     await bcrypt.hash(newPassword, 10);
 
-  await userRepository.updatePassword(
+  // Every token issued before this moment stops working in
+  // `auth.middleware.js` — including the one this request came in on — so the
+  // caller gets a new session back and stays signed in on this device only.
+  const updated = await userRepository.updatePassword(
     userId,
-    hashedPassword
+    hashedPassword,
+    new Date()
   );
 
-  return;
+  return createSession(updated);
 };

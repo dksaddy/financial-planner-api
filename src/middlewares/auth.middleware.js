@@ -1,5 +1,5 @@
 import AppError from "../utils/AppError.js";
-import { verifyToken } from "../utils/jwt.js";
+import { issuedAtMs, verifyToken } from "../utils/jwt.js";
 import * as userRepository from "../repositories/user.repository.js";
 import * as tokenDenylistRepository from "../repositories/tokenDenylist.repository.js";
 import { HTTP_STATUS } from "../constants/httpStatus.js";
@@ -16,19 +16,32 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
 
-    const isRevoked = await tokenDenylistRepository.isRevoked(decoded.jti);
+    const [isRevoked, sessionUser] = await Promise.all([
+      tokenDenylistRepository.isRevoked(decoded.jti),
+      userRepository.findSessionUser(decoded.id),
+    ]);
 
     if (isRevoked) {
       throw new AppError(AUTH_MESSAGES.INVALID_TOKEN, HTTP_STATUS.UNAUTHORIZED);
     }
 
-    const user = await userRepository.findById(decoded.id);
-
-    if (!user) {
+    if (!sessionUser) {
       throw new AppError(
         AUTH_MESSAGES.USER_NOT_FOUND,
         HTTP_STATUS.UNAUTHORIZED,
       );
+    }
+
+    const { password_changed_at: passwordChangedAt, ...user } = sessionUser;
+
+    // A password change ends every session opened before it — the moment a
+    // user changes a password is the moment a stolen token most needs to stop
+    // working. The change itself hands the caller a fresh token.
+    if (
+      passwordChangedAt &&
+      issuedAtMs(decoded) < new Date(passwordChangedAt).getTime()
+    ) {
+      throw new AppError(AUTH_MESSAGES.INVALID_TOKEN, HTTP_STATUS.UNAUTHORIZED);
     }
 
     req.user = user;

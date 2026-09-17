@@ -86,6 +86,8 @@ export const USER_MESSAGES = {
     // confirmation needs a line of its own.
     CONFIRM_PASSWORD_REQUIRED: "Confirm password is required",
     PASSWORDS_DIFFER: "Passwords do not match",
+    PASSWORD_UNCHANGED:
+      "New password must be different from the current password",
 
     // An IANA zone name such as "Asia/Dhaka". Checked against Intl in the
     // schema and against Postgres in the service.
@@ -112,6 +114,9 @@ export const USER_MESSAGES = {
   AVATAR_LIMIT_REACHED: (max) =>
     `You can keep ${max} photos. Delete one before uploading another`,
 
+  // Answered with 403, like AUTH_MESSAGES.PASSWORD_INCORRECT: the session is
+  // valid, only this action is refused — and 403 is what
+  // `passwordConfirmLimiter` counts.
   OLD_PASSWORD_INCORRECT: "Old password is incorrect",
 
   // Checked in the service against the stored figure too, since a profile

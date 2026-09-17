@@ -173,17 +173,29 @@ export const updateAvatar = async (id, avatarUrl) => {
   return rows[0];
 };
 
-export const updatePassword = async (id, hashedPassword) => {
+// `changedAt` comes from the app's clock, not the database's NOW(): it is
+// compared against a token's issue time, which the app stamped, and the
+// database sits on another machine whose clock may not agree.
+export const updatePassword = async (id, hashedPassword, changedAt) => {
   const { rows } = await query(
     `
     UPDATE users
     SET
       password = $2,
+      password_changed_at = $3,
       updated_at = NOW()
     WHERE id = $1
-    RETURNING id
+    RETURNING
+      id,
+      name,
+      email,
+      salary,
+      working_days_per_month,
+      working_days_per_week,
+      time_zone,
+      avatar_url
     `,
-    [id, hashedPassword]
+    [id, hashedPassword, changedAt]
   );
 
   return rows[0];
@@ -203,6 +215,35 @@ export const findByIdWithPassword = async (id) => {
   );
 
   return rows[0];
+};
+
+// What `authenticate` needs on every request, in one round trip: the user it
+// hands on as `req.user`, plus when the password last changed so a token
+// issued before that can be refused. The middleware strips the timestamp
+// before `req.user` reaches a controller.
+export const findSessionUser = async (id) => {
+  const { rows } = await query(
+    `
+    SELECT
+      id,
+      name,
+      email,
+      salary,
+      working_days_per_month,
+      working_days_per_week,
+      time_zone,
+      avatar_url,
+      created_at,
+      updated_at,
+      password_changed_at
+    FROM users
+    WHERE id = $1
+    LIMIT 1
+    `,
+    [id]
+  );
+
+  return rows[0] ?? null;
 };
 
 // Postgres resolves `AT TIME ZONE` against its own zone database, which is not

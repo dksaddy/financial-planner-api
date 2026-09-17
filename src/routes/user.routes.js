@@ -3,6 +3,7 @@ import express from "express";
 import authenticate from "../middlewares/auth.middleware.js";
 import validate from "../middlewares/validate.middleware.js";
 import upload from "../middlewares/upload.middleware.js";
+import { passwordConfirmLimiter } from "../middlewares/rateLimit.middleware.js";
 
 import { AVATAR_MAX_MB } from "../constants/limits.js";
 
@@ -60,8 +61,12 @@ router.delete(
   deleteAvatar
 );
 
+// The old password is a guess like any other re-typed password, so it shares
+// the saving plans' limiter — and its budget, since it is the same account's
+// password being guessed. A wrong one answers 403, which is what it counts.
 router.put(
   "/change-password",
+  passwordConfirmLimiter,
   validate(changePasswordSchema),
   updatePassword
 );

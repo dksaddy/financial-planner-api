@@ -108,4 +108,10 @@ export const changePasswordSchema = z
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: VALIDATION.PASSWORDS_DIFFER,
     path: ["confirmPassword"],
+  })
+  // Not a strength rule — a "change" that keeps the same password would still
+  // end every other session while protecting nothing.
+  .refine((data) => data.newPassword !== data.oldPassword, {
+    message: VALIDATION.PASSWORD_UNCHANGED,
+    path: ["newPassword"],
   });

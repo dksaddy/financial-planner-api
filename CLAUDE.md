@@ -225,9 +225,14 @@ fourth file be chosen.
 `"YYYY-MM-DD"` strings. Always normalize with `toDateString()` from `src/utils/date.js` before comparing
 or keying by a date; mismatches here are silent.
 
-**Auth** — JWTs carry a `jti`. Logout inserts it into `token_denylist`, and `auth.middleware.js` checks
-the denylist on every request, so token revocation is a DB round-trip, not stateless.
-`jobs/purgeTokenDenylist.js` deletes rows past `expires_at` hourly (started by `server.js`).
+**Auth** — JWTs carry a `jti` and `iat_ms`. Logout inserts the `jti` into `token_denylist`, and
+`auth.middleware.js` checks the denylist on every request, so token revocation is a DB round-trip, not
+stateless. `jobs/purgeTokenDenylist.js` deletes rows past `expires_at` hourly (started by `server.js`).
+
+Changing the password stamps `users.password_changed_at` (migration 017, from the app's clock, not the DB's) and the
+middleware refuses any token issued before it, so every existing session ends; `PUT /users/change-password`
+returns a fresh `{ token, user }` for the caller. A wrong old password is a 403 and the route shares
+`passwordConfirmLimiter` with the saving-plan mutations. The new password must differ from the old one.
 
 ## Database
 

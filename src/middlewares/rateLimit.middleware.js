@@ -29,7 +29,8 @@ export const authLimiter = rateLimit({
 });
 
 // Every endpoint that asks for the password again is a place to guess it, so
-// the saving-plan mutations get a limiter of their own.
+// the saving-plan mutations and the password change share a limiter of their
+// own. One instance, so one budget per account across all of them.
 //
 // Two differences from authLimiter. It keys on the user id rather than the IP,
 // since these routes run behind `authenticate`: that follows one account

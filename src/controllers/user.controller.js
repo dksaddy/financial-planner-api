@@ -99,7 +99,9 @@ export const deleteAvatar = asyncHandler(async (req, res) => {
 export const updatePassword =
   asyncHandler(async (req, res) => {
 
-    await changePassword(
+    // A new `{ token, user }`: the change ended the session this request
+    // was made with.
+    const session = await changePassword(
       req.user.id,
       req.body
     );
@@ -107,7 +109,8 @@ export const updatePassword =
     return res.status(HTTP_STATUS.OK).json(
       new ApiResponse(
         HTTP_STATUS.OK,
-        USER_MESSAGES.PASSWORD_UPDATED
+        USER_MESSAGES.PASSWORD_UPDATED,
+        session
       )
     );
 

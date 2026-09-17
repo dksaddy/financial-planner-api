@@ -42,7 +42,9 @@ export const registerUser = async ({
   return createSession(user);
 };
 
-const createSession = (user) => {
+// Exported for `changePassword`, which ends every earlier session and so has to
+// hand the caller a new one.
+export const createSession = (user) => {
   const token = generateToken({
     id: user.id,
     email: user.email,

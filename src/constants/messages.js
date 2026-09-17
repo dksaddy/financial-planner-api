@@ -25,6 +25,11 @@ export const COMMON_MESSAGES = {
   // ApiResponse.
   API_ROOT: "Financial Planner API",
 
+  // `GET /api/health`. Unavailable when the database does not answer — the
+  // process being up is not the same as the API working.
+  HEALTHY: "API is healthy",
+  UNHEALTHY: "API is running but the database is unreachable",
+
   // A plain Error, not an AppError: the client gets the generic 500 and this
   // line only ever reaches the server log.
   CORS_BLOCKED: "Not allowed by CORS",

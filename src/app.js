@@ -15,6 +15,7 @@ import expenseRecordRoutes from "./routes/expenseRecords.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import targetRoutes from "./routes/targets.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import healthRoutes from "./routes/health.routes.js";
 
 const app = express();
 
@@ -55,6 +56,10 @@ app.get("/", (req, res) => {
     message: COMMON_MESSAGES.API_ROOT,
   });
 });
+
+// Unauthenticated and outside every limiter: Render's health check hits it on a
+// timer.
+app.use("/api/health", healthRoutes);
 
 app.use("/api/auth", authRoutes);
 

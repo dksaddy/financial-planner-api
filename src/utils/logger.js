@@ -8,8 +8,8 @@ const isProduction = () => env.nodeEnv === "production";
 
 morgan.token("id", (req) => req.id);
 
-// Render's health check hits this every few seconds; logging each one would
-// bury the lines that matter. A failing check still
+// Render's health check and the keep-alive pings hit this on a timer; logging
+// each one would bury the lines that matter. A failing check still
 // shows up, as a non-2xx.
 const skipHealthyPings = (req, res) =>
   req.originalUrl.startsWith("/api/health") && res.statusCode < 400;

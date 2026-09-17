@@ -23,6 +23,11 @@ export const env = {
 
   corsOrigin: process.env.CORS_ORIGIN,
 
+  // The public URL the keep-alive job pings. Render sets RENDER_EXTERNAL_URL on
+  // every web service; KEEP_ALIVE_URL overrides it, and leaving both unset
+  // turns the job off.
+  keepAliveUrl: process.env.KEEP_ALIVE_URL || process.env.RENDER_EXTERNAL_URL,
+
   // Hops of reverse proxy in front of the app — 1 on Render. Unset means none,
   // which is right for local development.
   trustProxy: Number(process.env.TRUST_PROXY) || 0,

@@ -1,6 +1,11 @@
 # Render Blueprint for the API. New → Blueprint → pick this repo, then fill in
 # every `sync: false` value in the dashboard; they are secrets and never live
 # in the repo.
+#
+# The free plan sleeps after 15 idle minutes. src/jobs/keepAlive.js pings
+# /api/health from inside (Render sets RENDER_EXTERNAL_URL, so nothing to
+# configure), and .github/workflows/keep-alive.yml pings from outside once the
+# API_HEALTH_URL repo variable is set.
 services:
   - type: web
     name: financial-planner-api

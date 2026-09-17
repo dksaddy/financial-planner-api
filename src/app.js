@@ -66,8 +66,8 @@ app.get("/", (req, res) => {
   });
 });
 
-// Unauthenticated and outside every limiter: Render's health check hits it on a
-// timer.
+// Unauthenticated and outside every limiter: Render's health check and the
+// keep-alive pings both hit it on a timer.
 app.use("/api/health", healthRoutes);
 
 app.use("/api/auth", authRoutes);

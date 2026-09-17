@@ -261,8 +261,10 @@ for both the app pool and `scripts/db.js`; `TRUST_PROXY=1` makes `req.ip` the vi
 proxy, which the IP-keyed login limiter depends on. `CORS_ORIGIN` is the Vercel URL.
 
 `GET /api/health` is unauthenticated, unlimited and unlogged when healthy: 200 with `database: "up"`, or
-503 when `SELECT 1` fails. It is Render's `healthCheckPath`. Nothing keeps the free service awake on
-purpose: it sleeps after 15 idle minutes and the next request waits out a cold start.
+503 when `SELECT 1` fails. It is Render's `healthCheckPath`. Free services sleep after 15 idle minutes, so
+`jobs/keepAlive.js` pings it every 14 minutes in production (URL from `KEEP_ALIVE_URL` or Render's own
+`RENDER_EXTERNAL_URL`), and `.github/workflows/keep-alive.yml` pings from outside every 10 minutes as the
+backup that can also wake a sleeping service — it needs the repo variable `API_HEALTH_URL`.
 
 ## Database
 

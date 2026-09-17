@@ -27,4 +27,14 @@ export const updateTargetSchema = z.object({
   status: z
     .enum(TARGET_STATUSES)
     .optional(),
+
+  // Drops the picture. A multipart body carries it as the string "true", a
+  // JSON body as a boolean, so both are accepted.
+  remove_image: z
+    .preprocess(
+      (value) =>
+        value === "true" ? true : value === "false" ? false : value,
+      z.boolean({ error: VALIDATION.REMOVE_IMAGE_BOOLEAN })
+    )
+    .optional(),
 });

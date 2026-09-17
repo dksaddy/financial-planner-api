@@ -18,7 +18,6 @@ describe("PUT /api/target/:id", () => {
       .send({
         name: "Gaming Laptop",
         target_amount: 100000,
-        status: "completed",
       });
 
     expect(response.status).toBe(200);

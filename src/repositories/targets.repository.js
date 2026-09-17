@@ -82,6 +82,7 @@ export const update = async (
     name,
     target_amount,
     status,
+    image_url,
   }
 ) => {
   const { rows } = await query(
@@ -91,6 +92,7 @@ export const update = async (
       name=$3,
       target_amount=$4,
       status=$5,
+      image_url=$6,
       updated_at=NOW()
     WHERE id=$1
     AND user_id=$2
@@ -102,6 +104,7 @@ export const update = async (
       name,
       target_amount,
       status,
+      image_url,
     ]
   );
 

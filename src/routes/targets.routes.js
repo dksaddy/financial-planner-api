@@ -40,8 +40,10 @@ router.get(
   getTarget
 );
 
+// Accepts JSON, or multipart when a new picture is sent.
 router.put(
   "/:id",
+  upload.single("image", TARGET_IMAGE_MAX_MB),
   validate(updateTargetSchema),
   updateTarget
 );

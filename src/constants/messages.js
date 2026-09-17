@@ -288,6 +288,7 @@ export const EXPENSE_RECORD_MESSAGES = {
 export const TARGET_MESSAGES = {
   VALIDATION: {
     AMOUNT_POSITIVE: "Target amount must be greater than 0",
+    REMOVE_IMAGE_BOOLEAN: "remove_image must be true or false",
   },
 
   CREATED: "Target created successfully",
@@ -296,6 +297,17 @@ export const TARGET_MESSAGES = {
   UPDATED: "Target updated successfully",
   DELETED: "Target deleted successfully",
   NOT_FOUND: "Target not found",
+
+  // A completed target is paid for out of Total Extra Save, so it cannot be
+  // completed for more than is there. Carries what is available.
+  INSUFFICIENT_EXTRA_SAVE: (available) =>
+    `Not enough Extra Save to complete this target. Available: ${available}`,
+
+  // Its amount has already been taken out of Total Extra Save.
+  COMPLETED_AMOUNT_LOCKED:
+    "A completed target's amount cannot be changed. Set it back to pending first",
+
+  IMAGE_CONFLICT: "Send a new image or remove the current one, not both",
 };
 
 // Every status needs its STATUS_CHANGED line. Checked once at import, so a

@@ -66,6 +66,10 @@ rule is checked and then written: expense-record create/update/delete (weekly ca
 Save), target updates (a completion spends Extra Save) and avatar uploads (album cap). Nested calls reuse
 the outer transaction.
 
+Logging: `requestId.middleware.js` tags each request (`req.id`, echoed as `X-Request-Id`), and
+`utils/logger.js` prints access and error lines with it — one JSON object per line in production,
+morgan's readable shape elsewhere.
+
 Errors: `AppError` sets `isOperational`. `error.middleware.js` only echoes messages from operational
 errors; anything else becomes a generic 500 with the real error logged server-side. Validation failures
 short-circuit in `validate.middleware.js` with a different shape (`{ success, message, errors[] }` — no
@@ -222,12 +226,19 @@ output is WebP whatever went in. A re-encode that comes out no smaller than the 
 the original stored instead, so compressing can never cost space. It takes an optional `maxDimension`:
 targets use the 1024 default, avatars pass 256.
 
+`PUT /target/:id` accepts multipart too: a new `image` replaces the picture (the old file is removed once
+no target points at it), `remove_image: true` drops it, and sending both is a 400.
+
 An avatar album is capped at `AVATAR_MAX` (3). Storage is the only record of it — every upload lands in
 `${userId}/<uuid>.<ext>` and nothing replaces a file — so `uploadAvatar` counts the folder listing and
 answers 400 `AVATAR_LIMIT_REACHED` before it uploads. A full album has to have a photo deleted first,
 and the current avatar cannot be deleted (`AVATAR_IN_USE`), so the user picks another photo, then
 deletes. The web mirrors the cap in its own `limits.js` and disables the picker rather than letting a
 fourth file be chosen.
+
+**Targets** — completing a target spends Total Extra Save, so `updateTarget` refuses a completion larger
+than what is available (`INSUFFICIENT_EXTRA_SAVE`) and refuses to change a completed target's amount
+(`COMPLETED_AMOUNT_LOCKED`) unless the same request sets it back to pending.
 
 **Dates** — `pg` returns `date` columns as JS `Date`, while validated request bodies carry
 `"YYYY-MM-DD"` strings. Always normalize with `toDateString()` from `src/utils/date.js` before comparing

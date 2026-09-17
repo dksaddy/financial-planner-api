@@ -74,7 +74,8 @@ export const updateTarget =
       await targetService.updateTarget(
         req.params.id,
         req.user.id,
-        req.body
+        req.body,
+        req.file
       );
 
     return res.status(
